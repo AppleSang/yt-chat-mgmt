@@ -41,11 +41,12 @@ jobs:
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
             echo "name=yt-chat-mgmt v${VERSION} (${SHORT})" >> "$GITHUB_OUTPUT"
             {
-              echo "⚠️ **EN:** This is a dev build, built automatically from the latest commit. It may contain bugs or unfinished features."
+              echo "> [!WARNING]"
+              echo "> ⚠️ **EN:** This is a dev build, built automatically from the latest commit. It may contain bugs or unfinished features."
+              echo ">"
+              echo "> ⚠️ **VI:** Đây là bản dev-build, build tự động từ commit mới nhất — có thể chứa lỗi hoặc tính năng chưa hoàn thiện."
               echo ""
-              echo "⚠️ **VI:** Đây là bản dev-build, build tự động từ commit mới nhất — có thể chứa lỗi hoặc tính năng chưa hoàn thiện."
-              echo ""
-              echo "![yt-chat-mgmt](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/yt-chat-mgmt-banner.png)"
+              echo "![yt-chat-mgmt](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/yt-chat-mgmt-banner.svg)"
             } > release_body.md
           fi
 
