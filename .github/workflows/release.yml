@@ -28,15 +28,25 @@ jobs:
         id: meta
         run: |
           VERSION=$(node -p "require('./dist/manifest.json').version")
+          cat > release_body.md <<'EOF'
+          EOF
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
             echo "name=yt-chat-mgmt v${VERSION}" >> "$GITHUB_OUTPUT"
           else
             SHORT="${GITHUB_SHA:0:7}"
-            echo "tag=auto-v${VERSION}-${SHORT}" >> "$GITHUB_OUTPUT"
+            TAG="auto-v${VERSION}-${SHORT}"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
-            echo "name=yt-chat-mgmt v${VERSION} (auto ${SHORT})" >> "$GITHUB_OUTPUT"
+            echo "name=yt-chat-mgmt v${VERSION} (${SHORT})" >> "$GITHUB_OUTPUT"
+            {
+              echo "⚠️ **EN:** This is a dev build, built automatically from the latest commit. It may contain bugs or unfinished features."
+              echo ""
+              echo "⚠️ **VI:** Đây là bản dev-build, build tự động từ commit mới nhất — có thể chứa lỗi hoặc tính năng chưa hoàn thiện."
+              echo ""
+              echo "![yt-chat-mgmt](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/yt-chat-mgmt-banner.png)"
+            } > release_body.md
           fi
 
       - name: Zip dist
@@ -48,5 +58,8 @@ jobs:
           tag_name: ${{ steps.meta.outputs.tag }}
           name: ${{ steps.meta.outputs.name }}
           prerelease: ${{ steps.meta.outputs.prerelease }}
-          files: yt-chat-mgmt-${{ steps.meta.outputs.tag }}.zip
+          body_path: release_body.md
+          files: |
+            yt-chat-mgmt-${{ steps.meta.outputs.tag }}.zip
+            yt-chat-mgmt-banner.png
           generate_release_notes: true
