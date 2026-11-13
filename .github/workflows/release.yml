@@ -36,7 +36,7 @@ jobs:
             echo "name=yt-chat-mgmt v${VERSION}" >> "$GITHUB_OUTPUT"
           else
             SHORT="${GITHUB_SHA:0:7}"
-            TAG="auto-v${VERSION}-${SHORT}"
+            TAG="v${VERSION}-${SHORT}"
             echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
             echo "name=yt-chat-mgmt v${VERSION} (${SHORT})" >> "$GITHUB_OUTPUT"
@@ -46,7 +46,7 @@ jobs:
               echo ">"
               echo "> ⚠️ **VI:** Đây là bản dev-build, build tự động từ commit mới nhất — có thể chứa lỗi hoặc tính năng chưa hoàn thiện."
               echo ""
-              echo "![yt-chat-mgmt](https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/yt-chat-mgmt-banner.svg)"
+              echo "![yt-chat-mgmt](https://raw.githubusercontent.com/AppleSang/yt-chat-mgmt/refs/heads/main/yt-chat-mgmt-banner.svg)"
             } > release_body.md
           fi
 
