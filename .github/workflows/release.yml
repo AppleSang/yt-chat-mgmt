@@ -1,7 +1,5 @@
 name: Release
 
-# Publishes a stable release only when the manifest version changes —
-# bump-version.ps1 touches exactly this file, so a version bump IS a release.
 on:
   push:
     branches: [main]
@@ -59,8 +57,6 @@ jobs:
           name: yt-chat-mgmt v${{ env.VERSION }}
           prerelease: false
           body_path: release_body.md
-          # Appends GitHub's auto notes (with the tag-to-tag compare link)
-          # AFTER the body above.
           generate_release_notes: true
           files: |
             yt-chat-mgmt-v${{ env.VERSION }}.zip
