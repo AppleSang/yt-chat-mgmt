@@ -355,7 +355,7 @@ const renderAddedUsers = (): void => {
     const del = document.createElement("button");
     del.type = "button";
     del.className = "stv-remove";
-    del.textContent = "âˆ’";
+    del.textContent = "−";
     del.title = "Remove";
     del.addEventListener("click", () => {
       saveSetIds(
