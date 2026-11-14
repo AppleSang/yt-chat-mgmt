@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>yt-chat-mgmt</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="frame">
+
+    <header class="bar">
+      <div class="brand">
+        <span class="brand-mark">Y</span>
+        <h1>yt-chat-mgmt</h1>
+      </div>
+      <span class="rev mono" id="rev">rev ---</span>
+    </header>
+
+    <main id="main">
+
+      <section class="card">
+        <div class="card-head" data-i18n="popupSettingsCard">Settings</div>
+
+        <label class="opt">
+          <input type="checkbox" id="enabled" />
+          <span data-i18n="popupCleanupOption">Command cleanup</span>
+        </label>
+
+        <label class="opt">
+          <input type="checkbox" id="autoLiveChat" />
+          <span data-i18n="popupAutoLiveChat">Auto-enable “Live chat” mode</span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" id="hideBadges" />
+          <span data-i18n="popupHideBadges">Hide badges (member / mod)</span>
+        </label>
+        <label class="opt">
+          <input type="checkbox" id="hideAvatars" />
+          <span data-i18n="popupHideAvatars">Hide chatter avatars</span>
+        </label>
+
+        <div class="bot-list">
+          <span class="lbl" data-i18n="popupBotList">Hide bots (comma separated)</span>
+          <input type="text" id="botList" placeholder="@nightbot, @streamelements, @streamlabs" />
+        </div>
+
+        <div class="bot-list">
+          <span class="lbl">
+            <span data-i18n="popupBotToastTime">Bot toast duration (max 35s):</span>
+            <b id="botToastVal">10s</b>
+          </span>
+          <input type="range" id="botToastSeconds" min="1" max="35" step="1" />
+        </div>
+      </section>
+
+      <section class="card logsec">
+        <div class="card-head loghead">
+          <span data-i18n="popupLogCard">Log</span>
+          <span class="count mono">[ <b id="logCount">000</b> ]</span>
+          <button id="clearLog" type="button" class="btn btn-secondary" data-i18n="popupClear">Clear</button>
+        </div>
+        <ul id="logList"></ul>
+      </section>
+
+    </main>
+
+    <footer class="lang-footer">
+      <span class="lbl" data-i18n="popupLanguage">Language</span>
+      <select id="language"></select>
+    </footer>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
