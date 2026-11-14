@@ -1,4 +1,4 @@
-﻿import type { Emote } from "../language/types";
+import type { Emote } from "../language/types";
 import { log } from "./logger";
 
 let emotes: Emote[] = [];
@@ -128,7 +128,7 @@ export const loadEmotes = async (): Promise<void> => {
 // CDN image URLs (no dataURL conversion, so memory stays flat).
 
 // Resolve the CDN variant URLs once per set load: "low" keeps the legacy
-// pick order (2x.webp â†’ any WEBP â†’ first file) so toggling HQ off can never
+// pick order (2x.webp → any WEBP → first file) so toggling HQ off can never
 // change what was rendered before the feature existed; "hq" is the plain
 // 4x.webp file when the host provides one.
 const build7tvUrl = (host: { url?: string; files?: Array<{ name?: string; format?: string }> }): { low: string; hq: string | null } | null => {
@@ -190,7 +190,7 @@ const fetch7tvSet = (id: string): Promise<{ emotes?: unknown[] } | null> =>
 // The parsed emote list is cached in storage.local and applied instantly on
 // page load; the network only refreshes when the cache is stale or
 // incomplete. Writes are chunked (10 emotes every 3s, 2x pass first, then
-// 4x) so no single big storage write ever blocks the page â€” the freeze that
+// 4x) so no single big storage write ever blocks the page — the freeze that
 // killed v1.0.86 came from one multi-hundred-KB write during boot plus an
 // immediate full-list regex build and document sweep.
 const STV_CACHE_KEY = "emoteStvCache";
@@ -406,7 +406,7 @@ const load7tvEmotes = async (): Promise<void> => {
   // entries fill whatever the fetch dropped this round (e.g. a failed set).
   const byKey = new Map<string, Emote>();
   for (const e of fetched) byKey.set(e.keyword.toLowerCase(), e);
-  // Cache fill only from still-configured sets â€” removed users must not
+  // Cache fill only from still-configured sets — removed users must not
   // resurrect their emotes here (the total stays global + current users).
   for (const e of sevenTvEmotes) {
     if (!configured.has(e.setId || "global")) continue;
@@ -418,7 +418,7 @@ const load7tvEmotes = async (): Promise<void> => {
   log("7tv emotes loaded:", merged.length, "(total:", emotes.length, ")");
   // Persist for the next page loads: 2x pass first, then the 4x pass. The
   // 2x pass is skipped when the cached list already matches the merged list
-  // keyword-for-keyword (same sets, same order) â€” it resumes into the 4x
+  // keyword-for-keyword (same sets, same order) — it resumes into the 4x
   // pass instead of being rewritten from scratch.
   lastAdded = merged;
   lastIds = ids;
@@ -471,7 +471,7 @@ export const emoteSrc = (emote: Emote | null | undefined): string => {
 
 // The sweep cannot rebuild messages that are already rendered as <img>
 // (the keyword text was replaced), so a HQ switch swaps the src attribute
-// directly. The observer watches childList only â€” attribute changes never
+// directly. The observer watches childList only — attribute changes never
 // re-enter it, so there is no loop risk.
 const swapRenderedEmoteSrc = (): void => {
   // Poll labels use the CSS-static path and hold no <img>: their emote URL
@@ -505,7 +505,7 @@ export const applyEmotes = (el: HTMLElement): void => {
   else message = el.querySelector("#message");
   if (!message || !emotePattern) return;
   // Poll summary ("viewer engagement") messages: only the question title
-  // line (bold span) gets emotes â€” answer lines ("label (12%)") and the
+  // line (bold span) gets emotes — answer lines ("label (12%)") and the
   // ended footer stay plain text.
   const engagement = !!message.closest(
     "yt-live-chat-viewer-engagement-message-renderer"
@@ -570,9 +570,9 @@ export const applyEmotes = (el: HTMLElement): void => {
 };
 
 // Poll cards are re-rendered/restored by YouTube constantly, so processing
-// must be idempotent AND free of childList mutations â€” inserting img/span
+// must be idempotent AND free of childList mutations — inserting img/span
 // pairs made YouTube's Polymer re-renders and our sweeps fight each other,
-// which flickered (raw label â†’ emote â†’ empty). The static strategy marks
+// which flickered (raw label → emote → empty). The static strategy marks
 // the label's PARENT element instead: the keyword text stays where Polymer
 // put it (hidden by CSS) and the emote is painted via ::before, so even a
 // full YouTube re-render of the label keeps looking the same.
@@ -638,7 +638,7 @@ const pollCardCanonical = (card: HTMLElement): boolean => {
     const node = walker.currentNode as Text;
     const parent = node.parentElement;
     // Converted labels (CSS mark or legacy keep-span) never count as raw
-    // text â€” Polymer may rewrite them freely while they stay invisible.
+    // text — Polymer may rewrite them freely while they stay invisible.
     if (isPollEmoteMarked(parent)) continue;
     if (isConvertibleTextNode(node)) return false;
   }
@@ -649,7 +649,7 @@ export const applyPollEmotes = (card: HTMLElement): void => {
   if (!emotePattern) return;
   ensurePollEmoteStyle();
   // Strip emote images left by older content-script instances (extension
-  // reload without a page refresh keeps them running) â€” ours are marked
+  // reload without a page refresh keeps them running) — ours are marked
   // with data-ytccc-poll and handled below; legacy unmarked ones die here.
   card.querySelectorAll("img").forEach((img) => {
     if (img.dataset && img.dataset.ytcccPoll) return;
@@ -680,7 +680,7 @@ export const applyPollEmotes = (card: HTMLElement): void => {
   while (walker.nextNode()) {
     const node = walker.currentNode as Text;
     // Same skip as the canonical check: text inside a converted (marked or
-    // keep-span) label must never be re-converted â€” re-nesting here is what
+    // keep-span) label must never be re-converted — re-nesting here is what
     // made poll emotes multiply on every YouTube update.
     if (isPollEmoteMarked(node.parentElement)) continue;
     if (isConvertibleTextNode(node)) targets.push(node);
@@ -692,7 +692,7 @@ export const applyPollEmotes = (card: HTMLElement): void => {
   for (const node of targets) {
     const parent = node.parentElement;
     if (!parent) continue;
-    // Marked label: converted â€” just refresh the CSS var if the emote URL
+    // Marked label: converted — just refresh the CSS var if the emote URL
     // changed (HQ toggle / emote reload). Attribute-only, never flickers.
     if (parent.dataset.ytcccEmote) {
       const cur = emoteKeywordMap.get((parent.textContent || "").trim().toLowerCase());
@@ -705,7 +705,7 @@ export const applyPollEmotes = (card: HTMLElement): void => {
     const kw = emoteKeywordMap.get(text.trim().toLowerCase());
     const src = emoteSrc(kw);
     // YouTube's poll updater sometimes appends a duplicate label text node
-    // next to an already converted pair â€” drop the redundant copy instead
+    // next to an already converted pair — drop the redundant copy instead
     // of stacking another emote image.
     let prev = node.previousSibling;
     let duplicate = false;
@@ -745,7 +745,7 @@ export const applyPollEmotes = (card: HTMLElement): void => {
     ) {
       // Static CSS path: the parent holds ONLY this keyword, so hide the
       // (Polymer-owned) text via the mark and paint the emote with ::before.
-      // No childList mutation â€” YouTube's re-renders cannot fight us.
+      // No childList mutation — YouTube's re-renders cannot fight us.
       markPollEmote(parent, src);
       continue;
     }

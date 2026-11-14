@@ -1,4 +1,4 @@
-﻿import {
+import {
   t,
   setLanguage,
   getLanguage,
@@ -482,8 +482,8 @@ const refreshStats = (): void => {
     const list = c && Array.isArray(c.emotes) ? c.emotes : [];
     const bytes = c ? JSON.stringify(c).length : 0;
     els.statCache.textContent = bytes
-      ? `${fmtBytes(bytes)} Â· ${list.length} ${t("popupStatEmotes")}`
-      : "â€”";
+      ? `${fmtBytes(bytes)} · ${list.length} ${t("popupStatEmotes")}`
+      : "—";
     // 4x warning: visible while 4x mode is on and its cache pass is pending.
     els.emoteHqWarn.hidden = !(els.emoteHq.checked && !!c && !c.done4x);
     // Progress bar over the writer's own counters; ETA assumes the fixed
@@ -506,7 +506,7 @@ const refreshStats = (): void => {
           ? `${Math.floor(etaSec / 60)}p ${etaSec % 60}s`
           : `${etaSec}s`;
       els.statBarText.textContent =
-        `${cached}/${total} Â· ` + t("popupStatEta").replace("{s}", eta);
+        `${cached}/${total} · ` + t("popupStatEta").replace("{s}", eta);
     }
   });
 };

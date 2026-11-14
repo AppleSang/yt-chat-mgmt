@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Types for yt-chat-mgmt.
  */
 
