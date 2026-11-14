@@ -1,15 +1,17 @@
-name: Build & Release
+name: Release
+
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
+    paths:
+      - "public/manifest.json"
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,43 +26,46 @@ jobs:
       - name: Build
         run: node build.mjs
 
-      - name: Release metadata
-        id: meta
+      - name: Read version
         run: |
           VERSION=$(node -p "require('./dist/manifest.json').version")
-          cat > release_body.md <<'EOF'
-          EOF
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-            echo "name=yt-chat-mgmt v${VERSION}" >> "$GITHUB_OUTPUT"
-          else
-            SHORT="${GITHUB_SHA:0:7}"
-            TAG="v${VERSION}-${SHORT}"
-            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-            echo "name=yt-chat-mgmt v${VERSION} (${SHORT})" >> "$GITHUB_OUTPUT"
-            {
-              echo "> [!WARNING]"
-              echo "> ⚠️ **EN:** This is a dev build, built automatically from the latest commit. It may contain bugs or unfinished features."
-              echo ">"
-              echo "> ⚠️ **VI:** Đây là bản dev-build, build tự động từ commit mới nhất — có thể chứa lỗi hoặc tính năng chưa hoàn thiện."
-              echo ""
-              echo "![yt-chat-mgmt](https://raw.githubusercontent.com/AppleSang/yt-chat-mgmt/refs/heads/main/yt-chat-mgmt-banner.svg)"
-            } > release_body.md
-          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Zip dist
-        run: (cd dist && zip -qr "../yt-chat-mgmt-${{ steps.meta.outputs.tag }}.zip" .)
+        run: (cd dist && zip -qr "../yt-chat-mgmt-v${VERSION}.zip" .)
+
+      - name: Build release notes
+        run: |
+          awk -v head="## ${VERSION}" '
+            $0 == head {f = 1; next}
+            /^## / {f = 0}
+            f
+          ' CHANGELOG.md > release_body.md
+          if [ -s release_body.md ]; then printf '\n' >> release_body.md; fi
+          cat >> release_body.md <<EOF
+          ---
+
+          <p align="center"><img src="https://raw.githubusercontent.com/AppleSang/yt-chat-mgmt/refs/heads/main/yt-chat-mgmt-banner.svg" alt="yt-chat-mgmt" /></p>
+          EOF
 
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          name: ${{ steps.meta.outputs.name }}
-          prerelease: ${{ steps.meta.outputs.prerelease }}
+          tag_name: v${{ env.VERSION }}
+          name: yt-chat-mgmt v${{ env.VERSION }}
+          prerelease: false
           body_path: release_body.md
+          generate_release_notes: false
           files: |
-            yt-chat-mgmt-${{ steps.meta.outputs.tag }}.zip
-            yt-chat-mgmt-banner.png
-          generate_release_notes: true
+            yt-chat-mgmt-v${{ env.VERSION }}.zip
+
+      - name: Remove source-code archives from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # GitHub auto-attaches "Source code (zip/tar.gz)" to every release;
+          # the download page should only offer the built extension zip.
+          RID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${VERSION}" --jq '.id')
+          for id in $(gh api "repos/${GITHUB_REPOSITORY}/releases/${RID}/assets" --jq '.[] | select(.name | startswith("Source code")) | .id'); do
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" > /dev/null
+          done
