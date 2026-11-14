@@ -1,7 +1,7 @@
-import { getEmotes, emoteSrc } from "./emotes";
-import { t } from "../shared/i18n";
+﻿import { getEmotes, emoteSrc } from "./emotes";
+import { t } from "../language/i18n";
 import { log } from "./logger";
-import type { Emote } from "../shared/types";
+import type { Emote } from "../language/types";
 
 type Field = HTMLElement & { dataset: DOMStringMap };
 
@@ -108,7 +108,7 @@ export const insertEmote = (keyword: string): void => {
 // Panel / search-result clicks insert the raw keyword as PLAIN TEXT instead
 // of an inline image: the text is what YouTube's own send model reliably
 // reads, and it renders as the emote in the sent message exactly like a
-// hand-typed trigger (bare keyword — the same thing flushEmoteField leaves
+// hand-typed trigger (bare keyword â€” the same thing flushEmoteField leaves
 // behind before sending). A trailing space keeps rapid clicks as separate
 // emotes instead of one glued keyword.
 const insertEmoteText = (keyword: string): void => {
@@ -143,7 +143,7 @@ const insertEmoteText = (keyword: string): void => {
     }
     field.appendChild(document.createTextNode(text));
   }
-  // YouTube builds its send model from input events — dispatch a synthetic
+  // YouTube builds its send model from input events â€” dispatch a synthetic
   // one (ignored by our handlers via `flushing`) so the text registers, and
   // only then park the caret at the end so the next click keeps appending.
   flushing = true;
@@ -244,7 +244,7 @@ const loadStvUsers = async (): Promise<void> => {
 
 // The category icon row sits above the emoji grid. Real DOM:
 // yt-emoji-picker-renderer > #category-buttons > yt-emoji-picker-category-
-// button-renderer (first = member ★, then YouTube ▶, ...).
+// button-renderer (first = member â˜…, then YouTube â–¶, ...).
 const findCategoryRow = (picker: Element): Element | null => {
   for (const sel of ["#category-buttons", "#categories", "#emoji-categories"]) {
     const r = picker.querySelector(sel);
@@ -275,7 +275,7 @@ const ensureStvStyle = (): void => {
 };
 
 // Official 7TV mark (paths taken verbatim from https://7tv.app/favicon.svg).
-// ViewBox is cropped to the glyph bounds (x 8..116.148, y 24..104) — the raw
+// ViewBox is cropped to the glyph bounds (x 8..116.148, y 24..104) â€” the raw
 // favicon has 24/128 units of transparent padding around it, which rendered
 // the mark visibly smaller than YouTube's own 24px category icons. Fill is
 // hardcoded white per design decision (picker surface is always dark).
@@ -337,7 +337,7 @@ const makeStvAvatarButton = (u: StvUserLite, size = 36): HTMLElement => {
 };
 
 // Our controls live INSIDE #category-buttons, appended AFTER the last
-// Polymer-stamped button — outside the dom-repeat's managed range, which is
+// Polymer-stamped button â€” outside the dom-repeat's managed range, which is
 // what made the 1.0.79 mid-row insertion corrupt rendering. Buttons are only
 // re-pinned when actually missing, so steady-state injects mutate nothing.
 const ensureStvButtons = (row: Element): void => {
@@ -371,7 +371,7 @@ const ensureStvButtons = (row: Element): void => {
     applySize(cat);
   }
   // The signature check rebuilds the avatar tail only when the user list
-  // changed — or when a re-render dropped some of them.
+  // changed â€” or when a re-render dropped some of them.
   const sig = stvUsers.map((u) => u.id).join(",");
   const avatars = row.querySelectorAll(":scope > .ytccc-stv-avatar");
   if (
@@ -843,7 +843,7 @@ const emoteFields = new Set<HTMLElement>();
 const markEmoteField = (field: Field | null): void => {
   if (!field || !field.dataset) return;
   // Picker internals (panel items, our own SVG buttons) are never emote
-  // fields — marking them let flush convert their imgs to text (corruption).
+  // fields â€” marking them let flush convert their imgs to text (corruption).
   if (findPicker()?.contains(field)) return;
   field.dataset.ytcccEmoteField = "1";
   emoteFields.add(field);
@@ -865,7 +865,7 @@ const flushTrackedFields = (): void => {
 // our own flush-on-outside-click does the same before sends). When the user
 // returns (focusin) or pastes text back, exact keyword tokens are rendered
 // back into emote images so the WYSIWYG input survives focus loss. Only
-// FULL-token matches convert — partial words and arbitrary text stay put,
+// FULL-token matches convert â€” partial words and arbitrary text stay put,
 // and 7TV emotes are included here because a restored keyword is known to
 // have been an emote (unlike hand-typed bare words).
 let restoring = false;
@@ -887,7 +887,7 @@ const restoreEmoteImages = (field: Field | null): void => {
   for (const node of nodes) {
     const val = node.nodeValue || "";
     // Hidden keyword spans carry \u200b wrappers, so their text can never
-    // match a bare token here — no explicit exclusion needed.
+    // match a bare token here â€” no explicit exclusion needed.
     if (!val.trim()) continue;
     const parts = val.split(/(\s+)/); // separators stay at odd indices
     let converted = false;
@@ -1031,7 +1031,7 @@ const isInputField = (field: Field | null): boolean =>
     field &&
     field.closest &&
     field.closest("#input, #textbox, yt-live-chat-message-input-renderer") &&
-    // The emoji picker popup lives INSIDE the message input renderer too —
+    // The emoji picker popup lives INSIDE the message input renderer too â€”
     // its elements (search box, our buttons, panel items) must never count
     // as the chat field or text insertion targets them.
     !findPicker()?.contains(field)
@@ -1191,7 +1191,7 @@ export const initSuggest = (): void => {
     true
   );
 
-  // Enter may arrive as a paragraph "beforeinput" (some fields) — flush
+  // Enter may arrive as a paragraph "beforeinput" (some fields) â€” flush
   // there too; flushing is idempotent.
   window.addEventListener(
     "beforeinput",
@@ -1212,7 +1212,7 @@ export const initSuggest = (): void => {
     (e) => {
       const t = e.target as HTMLElement | null;
       if (!t || typeof t.closest !== "function") return;
-      // Picker interactions insert emotes — never flush those.
+      // Picker interactions insert emotes â€” never flush those.
       if (
         t.closest(
           ".ytccc-stv-emoji, .ytccc-stv-panel, .ytccc-stv-row, .ytccc-stv-cat, .ytccc-stv-avatar, #ytccc-emote-picker"

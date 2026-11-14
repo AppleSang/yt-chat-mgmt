@@ -22,6 +22,7 @@ export const vi: Dict = {
   popupClear: "Xoá",
   popupNoData: "Chưa có dữ liệu",
   popupLanguage: "Ngôn ngữ",
+  popupReportIssue: "Báo lỗi",
   popupStatsCard: "Thống kê",
   popupStatCache: "Dung lượng cache",
   popupStatEta: "còn khoảng {s}",

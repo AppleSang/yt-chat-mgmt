@@ -1,6 +1,6 @@
-import type { ExtensionConfig } from "../shared/types";
-import { DEFAULT_LANGUAGE, isLanguageCode, setLanguage } from "../shared/i18n";
-import type { LanguageCode } from "../shared/types";
+﻿import type { ExtensionConfig } from "../language/types";
+import { DEFAULT_LANGUAGE, isLanguageCode, setLanguage } from "../language/i18n";
+import type { LanguageCode } from "../language/types";
 import { log } from "./logger";
 
 const DEFAULTS: ExtensionConfig = {

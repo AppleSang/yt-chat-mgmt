@@ -1,5 +1,5 @@
-/**
- * Shared types for yt-chat-mgmt.
+﻿/**
+ * Types for yt-chat-mgmt.
  */
 
 export interface ExtensionConfig {

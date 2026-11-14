@@ -1,4 +1,4 @@
-import type { ToastOptions } from "../shared/types";
+﻿import type { ToastOptions } from "../language/types";
 import { ROLE_COLORS } from "./dom";
 
 const injectToastStyles = (): void => {

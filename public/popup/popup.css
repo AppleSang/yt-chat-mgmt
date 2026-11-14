@@ -157,8 +157,24 @@ footer.lang-footer {
   background: var(--surface-0);
 }
 
-footer.lang-footer .lbl {
+/* GitHub-style "report an issue" button, sits where the Language label was. */
+.issue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  background: var(--surface-1);
   color: var(--ink-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.issue-btn:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink-subtle);
 }
 
 /* ---------- Cards ---------- */

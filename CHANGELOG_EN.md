@@ -2,6 +2,14 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.98
+- **Renamed the `src/shared` folder to `src/language`** (all source imports + docs updated), and added a **README guide for adding your own language** (`src/language/README.md`): copy a locale, translate the values, register `LanguageCode` + `LOCALES`/`LANGUAGES`, build.
+- Verified: clean build, harness 16/16, jsdom picker 35/35, cache 11/11.
+
+## 1.0.97
+- **"Report an issue" button in the popup footer replaces the "Language" label**: GitHub-style button (issue-opened SVG icon + text, i18n key `popupReportIssue` vi/en) — clicking opens the new-issue page at `github.com/AppleSang/yt-chat-mgmt/issues/new` (via `chrome.tabs.create`, no "tabs" permission needed). The language select stays right next to it.
+- Verified: clean build, harness 16/16, jsdom picker 35/35, cache 11/11.
+
 ## 1.0.96
 - **Bot hiding no longer depends on the cleanup switch**: the bot branch in `processMessage` moved above the `config.enabled` gate — turning off "Cleanup commands" still hides bots and shows toasts (the toast follows `botToastSeconds` alone). `!` command cleanup still follows the switch as before.
 - Verified: clean build, harness 16/16, jsdom picker 35/35, cache 11/11.

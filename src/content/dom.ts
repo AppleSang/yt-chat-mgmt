@@ -1,4 +1,4 @@
-import type { ChatRole } from "../shared/types";
+﻿import type { ChatRole } from "../language/types";
 import { config } from "./config";
 
 export const MESSAGE_SELECTOR = [
@@ -41,7 +41,7 @@ export const applyBadges = (el: MessageEl): void => {
 
 export const getRole = (el: MessageEl): ChatRole => {
   // author-type on the message renderer / author name is YouTube's own
-  // role marker (owner / moderator / member; absent for viewers) — the
+  // role marker (owner / moderator / member; absent for viewers) â€” the
   // most reliable signal there is.
   const at = (el.getAttribute("author-type") || "").toLowerCase();
   if (at === "owner" || at === "moderator" || at === "member") return at;
@@ -77,8 +77,8 @@ export const getRole = (el: MessageEl): ChatRole => {
         "");
   });
   badges = badges.toLowerCase();
-  if (/\bowner\b|chủ\s*sở\s*hữu|chủ\s*kênh|\bhost\b/.test(badges)) return "owner";
-  if (/moderator|quản\s*trị|quản\s*lý|\bmod\b/.test(badges)) return "moderator";
+  if (/\bowner\b|chá»§\s*sá»Ÿ\s*há»¯u|chá»§\s*kÃªnh|\bhost\b/.test(badges)) return "owner";
+  if (/moderator|quáº£n\s*trá»‹|quáº£n\s*lÃ½|\bmod\b/.test(badges)) return "moderator";
   return "viewer";
 };
 

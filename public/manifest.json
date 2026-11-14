@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "yt-chat-mgmt",
   "short_name": "yt-chat-mgmt",
-  "description": "Tự động xoá/ẩn các tin nhắn live chat YouTube bắt đầu bằng dấu lệnh (mặc định: !), kèm bảng điều khiển mở bằng cửa sổ riêng.",
-  "version": "1.0.96",
+  "description": "Clear commands, hide bot messages, enhance live chat YouTube and support 7TV!",
+  "version": "1.0.98",
   "permissions": ["storage"],
   "host_permissions": ["https://*.youtube.com/*", "https://7tv.io/*"],
   "background": {

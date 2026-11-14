@@ -1,67 +1,67 @@
-# FEATURES — Luồng hoạt động từng tính năng
+﻿# FEATURES â€” Luá»“ng hoáº¡t Ä‘á»™ng tá»«ng tÃ­nh nÄƒng
 
-## F1. Dọn lệnh (!command) — `commands.ts`
-1. Content script boot trên trang chat (`yt-live-chat-app, #chat-items`).
-2. MutationObserver bắt tin nhắn mới (`MESSAGE_SELECTOR`).
+## F1. Dá»n lá»‡nh (!command) â€” `commands.ts`
+1. Content script boot trÃªn trang chat (`yt-live-chat-app, #chat-items`).
+2. MutationObserver báº¯t tin nháº¯n má»›i (`MESSAGE_SELECTOR`).
 3. `processMessage(el)`:
-   - Đọc tên tác giả + nội dung (`#author-name`, `#message`).
-   - Nếu text bắt đầu bằng prefix `!` → là tin lệnh.
-   - Chờ params xác thực (`waitForParams`, tối đa 2500ms) → gọi `deleteViaApi` (POST youtubei moderate, SAPISIDHASH) → thất bại thì thử menu (`tryMenuDelete`, chỉ khi có nút menu; có retry `waitForParams(1500)`).
-   - **Luôn** ẩn local (`hideLocally`) bất kể API thành công hay không; thất bại thì im lặng.
-   - Thành công → toast "Đã dọn: ..." + ghi `deletedLog` (storage.local, tối đa 200 entry).
-4. Toggle `enabled` tắt → `revealHiddenMessages()` khôi phục mọi tin đã ẩn.
+   - Äá»c tÃªn tÃ¡c giáº£ + ná»™i dung (`#author-name`, `#message`).
+   - Náº¿u text báº¯t Ä‘áº§u báº±ng prefix `!` â†’ lÃ  tin lá»‡nh.
+   - Chá» params xÃ¡c thá»±c (`waitForParams`, tá»‘i Ä‘a 2500ms) â†’ gá»i `deleteViaApi` (POST youtubei moderate, SAPISIDHASH) â†’ tháº¥t báº¡i thÃ¬ thá»­ menu (`tryMenuDelete`, chá»‰ khi cÃ³ nÃºt menu; cÃ³ retry `waitForParams(1500)`).
+   - **LuÃ´n** áº©n local (`hideLocally`) báº¥t ká»ƒ API thÃ nh cÃ´ng hay khÃ´ng; tháº¥t báº¡i thÃ¬ im láº·ng.
+   - ThÃ nh cÃ´ng â†’ toast "ÄÃ£ dá»n: ..." + ghi `deletedLog` (storage.local, tá»‘i Ä‘a 200 entry).
+4. Toggle `enabled` táº¯t â†’ `revealHiddenMessages()` khÃ´i phá»¥c má»i tin Ä‘Ã£ áº©n.
 
-## F2. Ẩn bot + toast — `commands.ts` + `toast.ts`
-1. Config botList → mảng tên (bỏ @, lowercase).
-2. Tin mới có tác giả khớp → ẩn local.
-3. Nếu `botToastSeconds > 0` → toast (avatar, tên, role, text) trong N giây; 0 = không toast.
+## F2. áº¨n bot + toast â€” `commands.ts` + `toast.ts`
+1. Config botList â†’ máº£ng tÃªn (bá» @, lowercase).
+2. Tin má»›i cÃ³ tÃ¡c giáº£ khá»›p â†’ áº©n local.
+3. Náº¿u `botToastSeconds > 0` â†’ toast (avatar, tÃªn, role, text) trong N giÃ¢y; 0 = khÃ´ng toast.
 
-## F3. Ẩn badge/avatar — `dom.ts`
-- `applyBadges(el)` chạy cho từng tin nhắn (observer) + sweep: set `display:none` theo `hideBadges`/`hideAvatars`.
+## F3. áº¨n badge/avatar â€” `dom.ts`
+- `applyBadges(el)` cháº¡y cho tá»«ng tin nháº¯n (observer) + sweep: set `display:none` theo `hideBadges`/`hideAvatars`.
 
-## F4. Emote render — `emotes.ts` + `index.ts`
-1. Nguồn: custom (`emotes.json`) + 7TV global + 7TV set của user (storage `emoteSetIds`, reload khi key đổi).
-2. URL ảnh: file local (`chrome.runtime.getURL`) hoặc CDN 7TV (`2x.webp` ưu tiên).
+## F4. Emote render â€” `emotes.ts` + `index.ts`
+1. Nguá»“n: custom (`emotes.json`) + 7TV global + 7TV set cá»§a user (storage `emoteSetIds`, reload khi key Ä‘á»•i).
+2. URL áº£nh: file local (`chrome.runtime.getURL`) hoáº·c CDN 7TV (`2x.webp` Æ°u tiÃªn).
 3. `applyEmotes(el)`:
-   - Tin nhắn: xử lý text node trong `#message`; comment: `#content-text`.
-   - Regex biên từ (không khớp giữa từ dài), bỏ qua node chứa `\u200b` (chống re-process).
-   - Thay keyword bằng `<img>` CDN.
-4. Poll: `applyPollEmotes(card)` — binding-safe state machine: legacy img không mark bị xoá; poll kết thúc (text có `(n%)`) → unwrap text gốc + xoá img; canonical check (không mutate khi mọi keyword đã là emote, node text nằm trong span ẩn bị bỏ qua); convert chỉ nhắm node text thô: label 1 keyword → **giữ nguyên text node** (bọc span ẩn — Polymer cập nhật tại chỗ) + chèn img trước span; text trộn nhiều keyword → thay fragment (giữ keyword trong span ẩn). Node text trùng YouTube append thêm cạnh cặp [img][span] sẵn có → **bỏ (dedup)**. Card tổng kết poll (`yt-live-chat-viewer-engagement-message-renderer`): chỉ dòng tiêu đề câu hỏi (span `style-target="bold"`) được render emote, các dòng câu trả lời + footer giữ text thuần; `#message` cũng được xử lý khi nhận trực tiếp element này.
-5. Chu kỳ xử lý: observer (tin nhắn tức thời; poll debounce 150ms, bỏ qua batch chứa artifact của mình) + sweep 3s (gồm `#message` engagement) + sweep khi emote load xong (`ytccc-emotes-loaded`) + sweep 300ms khi đổi settings.
+   - Tin nháº¯n: xá»­ lÃ½ text node trong `#message`; comment: `#content-text`.
+   - Regex biÃªn tá»« (khÃ´ng khá»›p giá»¯a tá»« dÃ i), bá» qua node chá»©a `\u200b` (chá»‘ng re-process).
+   - Thay keyword báº±ng `<img>` CDN.
+4. Poll: `applyPollEmotes(card)` â€” binding-safe state machine: legacy img khÃ´ng mark bá»‹ xoÃ¡; poll káº¿t thÃºc (text cÃ³ `(n%)`) â†’ unwrap text gá»‘c + xoÃ¡ img; canonical check (khÃ´ng mutate khi má»i keyword Ä‘Ã£ lÃ  emote, node text náº±m trong span áº©n bá»‹ bá» qua); convert chá»‰ nháº¯m node text thÃ´: label 1 keyword â†’ **giá»¯ nguyÃªn text node** (bá»c span áº©n â€” Polymer cáº­p nháº­t táº¡i chá»—) + chÃ¨n img trÆ°á»›c span; text trá»™n nhiá»u keyword â†’ thay fragment (giá»¯ keyword trong span áº©n). Node text trÃ¹ng YouTube append thÃªm cáº¡nh cáº·p [img][span] sáºµn cÃ³ â†’ **bá» (dedup)**. Card tá»•ng káº¿t poll (`yt-live-chat-viewer-engagement-message-renderer`): chá»‰ dÃ²ng tiÃªu Ä‘á» cÃ¢u há»i (span `style-target="bold"`) Ä‘Æ°á»£c render emote, cÃ¡c dÃ²ng cÃ¢u tráº£ lá»i + footer giá»¯ text thuáº§n; `#message` cÅ©ng Ä‘Æ°á»£c xá»­ lÃ½ khi nháº­n trá»±c tiáº¿p element nÃ y.
+5. Chu ká»³ xá»­ lÃ½: observer (tin nháº¯n tá»©c thá»i; poll debounce 150ms, bá» qua batch chá»©a artifact cá»§a mÃ¬nh) + sweep 3s (gá»“m `#message` engagement) + sweep khi emote load xong (`ytccc-emotes-loaded`) + sweep 300ms khi Ä‘á»•i settings.
 
-## F5. Soạn tin có emote — `suggest.ts`
-1. Gõ `|abc` → picker gợi ý (móc scenario: Tab/Enter chèn + dấu cách; ArrowUp/Down điều hướng; Esc đóng).
-   - Tab cũng complete bare word (`:app`, `app`) khi picker đóng (fix 1.0.73, `tabComplete`).
-2. Gõ đủ tên (`war` + Enter/cách gõ tự nhiên) → `tryAutoComplete`: thay node text bằng `[img][span ẩn "\u200bwar\u200b"][anchor "\u200b"]`, caret cuối field.
-3. Gõ thêm chữ cái → `revertExtendedEmote`: emote trả về text, gộp text gõ thêm (xoá `\u200b`), caret sau chữ vừa gõ.
-4. Backspace tại anchor → `restoreEmoteToText`: xoá cả emote, trả text, caret cuối từ.
-5. Catalog (emoji picker YouTube) + picker riêng → `insertEmote(keyword)`: thay `|token` (nếu có) hoặc chèn tại caret bằng DOM range.
-6. Copy trong ô soạn: clone selection, bỏ ảnh khi span nguồn ẩn đi kèm (hoặc dùng keyword ảnh cho selection chỉ có ảnh), xoá `\u200b` và đổi NBSP thành dấu cách trước khi ghi `text/plain` vào clipboard.
+## F5. Soáº¡n tin cÃ³ emote â€” `suggest.ts`
+1. GÃµ `|abc` â†’ picker gá»£i Ã½ (mÃ³c scenario: Tab/Enter chÃ¨n + dáº¥u cÃ¡ch; ArrowUp/Down Ä‘iá»u hÆ°á»›ng; Esc Ä‘Ã³ng).
+   - Tab cÅ©ng complete bare word (`:app`, `app`) khi picker Ä‘Ã³ng (fix 1.0.73, `tabComplete`).
+2. GÃµ Ä‘á»§ tÃªn (`war` + Enter/cÃ¡ch gÃµ tá»± nhiÃªn) â†’ `tryAutoComplete`: thay node text báº±ng `[img][span áº©n "\u200bwar\u200b"][anchor "\u200b"]`, caret cuá»‘i field.
+3. GÃµ thÃªm chá»¯ cÃ¡i â†’ `revertExtendedEmote`: emote tráº£ vá» text, gá»™p text gÃµ thÃªm (xoÃ¡ `\u200b`), caret sau chá»¯ vá»«a gÃµ.
+4. Backspace táº¡i anchor â†’ `restoreEmoteToText`: xoÃ¡ cáº£ emote, tráº£ text, caret cuá»‘i tá»«.
+5. Catalog (emoji picker YouTube) + picker riÃªng â†’ `insertEmote(keyword)`: thay `|token` (náº¿u cÃ³) hoáº·c chÃ¨n táº¡i caret báº±ng DOM range.
+6. Copy trong Ã´ soáº¡n: clone selection, bá» áº£nh khi span nguá»“n áº©n Ä‘i kÃ¨m (hoáº·c dÃ¹ng keyword áº£nh cho selection chá»‰ cÃ³ áº£nh), xoÃ¡ `\u200b` vÃ  Ä‘á»•i NBSP thÃ nh dáº¥u cÃ¡ch trÆ°á»›c khi ghi `text/plain` vÃ o clipboard.
 
-## F6. Gửi tin (flush) — `suggest.ts`
-1. Kết thúc soạn: Enter (không modifier) / beforeinput insertLineBreak|insertParagraph / click `#send-button` / click nút submit bất kỳ.
-2. `flushActiveField` / `flushTrackedFields`: mọi field từng chứa emote (Set `emoteFields`, hoạt động cả shadow DOM) được:
-   - Xả `[img][span ẩn]` → text gốc thuần, xoá `\u200b`;
-   - Phát lại `InputEvent("input")` (cờ `flushing` chặn handler của mình) để model YouTube cập nhật.
-3. YouTube đọc field/model → request mang text thật. Người có extension vẫn thấy emote trong khung chat (F4).
+## F6. Gá»­i tin (flush) â€” `suggest.ts`
+1. Káº¿t thÃºc soáº¡n: Enter (khÃ´ng modifier) / beforeinput insertLineBreak|insertParagraph / click `#send-button` / click nÃºt submit báº¥t ká»³.
+2. `flushActiveField` / `flushTrackedFields`: má»i field tá»«ng chá»©a emote (Set `emoteFields`, hoáº¡t Ä‘á»™ng cáº£ shadow DOM) Ä‘Æ°á»£c:
+   - Xáº£ `[img][span áº©n]` â†’ text gá»‘c thuáº§n, xoÃ¡ `\u200b`;
+   - PhÃ¡t láº¡i `InputEvent("input")` (cá» `flushing` cháº·n handler cá»§a mÃ¬nh) Ä‘á»ƒ model YouTube cáº­p nháº­t.
+3. YouTube Ä‘á»c field/model â†’ request mang text tháº­t. NgÆ°á»i cÃ³ extension váº«n tháº¥y emote trong khung chat (F4).
 
-## F7. Tự chuyển Live chat — `curtain.ts`
-1. `ensureSwitchLoop` (gate chỉ `switchRunning || !config.autoLiveChat`) → hiện curtain (icon128 vuông) → check/bật chế độ Live chat → set `switchStatus` (storage.local) → gỡ curtain.
-2. Popup/background có thể hỏi trạng thái qua `ytccc-check-mode`.
+## F7. Tá»± chuyá»ƒn Live chat â€” `curtain.ts`
+1. `ensureSwitchLoop` (gate chá»‰ `switchRunning || !config.autoLiveChat`) â†’ hiá»‡n curtain (icon128 vuÃ´ng) â†’ check/báº­t cháº¿ Ä‘á»™ Live chat â†’ set `switchStatus` (storage.local) â†’ gá»¡ curtain.
+2. Popup/background cÃ³ thá»ƒ há»i tráº¡ng thÃ¡i qua `ytccc-check-mode`.
 
-## F8. Popup — `popup.ts` + `popup.html`
-1. `loadAll`: đọc config + deletedLog + emoteSetIds + emoteUsers; render theo ngôn ngữ.
-2. Bất kỳ thay đổi → `chrome.storage.sync.set` ngay (không nút Lưu).
-3. 7TV search: GQL `users(query,limit)` → danh sách + nút +; thêm → lưu `emoteSetIds` (csv set id) + `emoteUsers` (danh sách user); nút − gỡ theo user.
-4. Xoá log → `chrome.storage.local.set({deletedLog: []})`.
+## F8. Popup â€” `popup.ts` + `popup.html`
+1. `loadAll`: Ä‘á»c config + deletedLog + emoteSetIds + emoteUsers; render theo ngÃ´n ngá»¯.
+2. Báº¥t ká»³ thay Ä‘á»•i â†’ `chrome.storage.sync.set` ngay (khÃ´ng nÃºt LÆ°u).
+3. 7TV search: GQL `users(query,limit)` â†’ danh sÃ¡ch + nÃºt +; thÃªm â†’ lÆ°u `emoteSetIds` (csv set id) + `emoteUsers` (danh sÃ¡ch user); nÃºt âˆ’ gá»¡ theo user.
+4. XoÃ¡ log â†’ `chrome.storage.local.set({deletedLog: []})`.
 
-## F9. i18n — `shared/i18n.ts`
-1. `setLanguage(code)` chọn bảng vi/en; popup render + toast + curtain dùng key.
-2. Đổi ngôn ngữ ở footer → lưu sync → mọi UI đọc lại.
+## F9. i18n â€” `language/i18n.ts`
+1. `setLanguage(code)` chá»n báº£ng vi/en; popup render + toast + curtain dÃ¹ng key.
+2. Äá»•i ngÃ´n ngá»¯ á»Ÿ footer â†’ lÆ°u sync â†’ má»i UI Ä‘á»c láº¡i.
 
-## F10. Mod tạo cuộc bầu chọn (`!poll`) — `commands.ts` + `inject.ts`
-1. `inject.ts` (main world) tự giải mã `continuation` của Studio chat để dựng `params` create_poll đúng ngữ cảnh kênh/live video, vì vậy không cần tạo poll thủ công trước. Nếu continuation đổi hoặc không có, bắt request `create_poll` (fetch + XHR) do chủ kênh tạo thủ công → lưu `params` + `context.client` vào `documentElement.dataset` (`ytcccPollParams`, `ytcccPollContext`); dự phòng cuối: quét sâu `ytInitialData` tìm key chứa "poll" có `params`.
-2. Mod/chủ kênh gõ `!poll "câu hỏi" "lựa chọn 1" "lựa chọn 2" ...` → extension của chủ kênh phân tích (ngoặc kép, tối thiểu 3 trường).
-3. Bật toggle `modPoll` trong popup (mặc định tắt). Đúng vai trò (mod/owner) + đủ trường → POST `live_chat/create_poll` (SAPISIDHASH như moderate) với `questionText`/`optionText` dạng `text_segments`.
-4. Thiếu `params` sau khi tự suy ra continuation và thử mọi fallback → toast hướng dẫn; sai vai trò/thiếu trường → toast lỗi.
-5. Tin `!poll` tiếp tục được dọn như lệnh thường (F1).
+## F10. Mod táº¡o cuá»™c báº§u chá»n (`!poll`) â€” `commands.ts` + `inject.ts`
+1. `inject.ts` (main world) tá»± giáº£i mÃ£ `continuation` cá»§a Studio chat Ä‘á»ƒ dá»±ng `params` create_poll Ä‘Ãºng ngá»¯ cáº£nh kÃªnh/live video, vÃ¬ váº­y khÃ´ng cáº§n táº¡o poll thá»§ cÃ´ng trÆ°á»›c. Náº¿u continuation Ä‘á»•i hoáº·c khÃ´ng cÃ³, báº¯t request `create_poll` (fetch + XHR) do chá»§ kÃªnh táº¡o thá»§ cÃ´ng â†’ lÆ°u `params` + `context.client` vÃ o `documentElement.dataset` (`ytcccPollParams`, `ytcccPollContext`); dá»± phÃ²ng cuá»‘i: quÃ©t sÃ¢u `ytInitialData` tÃ¬m key chá»©a "poll" cÃ³ `params`.
+2. Mod/chá»§ kÃªnh gÃµ `!poll "cÃ¢u há»i" "lá»±a chá»n 1" "lá»±a chá»n 2" ...` â†’ extension cá»§a chá»§ kÃªnh phÃ¢n tÃ­ch (ngoáº·c kÃ©p, tá»‘i thiá»ƒu 3 trÆ°á»ng).
+3. Báº­t toggle `modPoll` trong popup (máº·c Ä‘á»‹nh táº¯t). ÄÃºng vai trÃ² (mod/owner) + Ä‘á»§ trÆ°á»ng â†’ POST `live_chat/create_poll` (SAPISIDHASH nhÆ° moderate) vá»›i `questionText`/`optionText` dáº¡ng `text_segments`.
+4. Thiáº¿u `params` sau khi tá»± suy ra continuation vÃ  thá»­ má»i fallback â†’ toast hÆ°á»›ng dáº«n; sai vai trÃ²/thiáº¿u trÆ°á»ng â†’ toast lá»—i.
+5. Tin `!poll` tiáº¿p tá»¥c Ä‘Æ°á»£c dá»n nhÆ° lá»‡nh thÆ°á»ng (F1).

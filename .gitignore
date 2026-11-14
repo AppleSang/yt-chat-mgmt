@@ -5,3 +5,4 @@ dist/
 _legacy/
 bump-version.ps1
 dark-saas-landing.html
+backup/

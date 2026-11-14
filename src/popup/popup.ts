@@ -1,11 +1,11 @@
-import {
+﻿import {
   t,
   setLanguage,
   getLanguage,
   isLanguageCode,
   LANGUAGES,
   DEFAULT_LANGUAGE
-} from "../shared/i18n";
+} from "../language/i18n";
 
 const $ = (id: string): HTMLElement => document.getElementById(id)!;
 
@@ -155,6 +155,18 @@ const initLanguageSelect = (): void => {
     if (isLanguageCode(lang)) setLanguage(lang);
     applyI18n();
   });
+};
+
+// Footer "report an issue" button: opens the repo's new-issue page in a new
+// tab. chrome.tabs.create works from the popup without the "tabs" permission.
+const initReportIssue = (): void => {
+  document
+    .getElementById("popupReportIssue")
+    ?.addEventListener("click", () => {
+      chrome.tabs.create({
+        url: "https://github.com/AppleSang/yt-chat-mgmt/issues/new"
+      });
+    });
 };
 
 const loadLanguage = (cb: () => void): void => {
@@ -343,7 +355,7 @@ const renderAddedUsers = (): void => {
     const del = document.createElement("button");
     del.type = "button";
     del.className = "stv-remove";
-    del.textContent = "−";
+    del.textContent = "âˆ’";
     del.title = "Remove";
     del.addEventListener("click", () => {
       saveSetIds(
@@ -442,6 +454,7 @@ els.sevenTvSearch.addEventListener("input", () => {
 });
 
 initLanguageSelect();
+initReportIssue();
 loadLanguage(() => loadAll());
 
 // --- stats card -------------------------------------------------------------
@@ -469,8 +482,8 @@ const refreshStats = (): void => {
     const list = c && Array.isArray(c.emotes) ? c.emotes : [];
     const bytes = c ? JSON.stringify(c).length : 0;
     els.statCache.textContent = bytes
-      ? `${fmtBytes(bytes)} · ${list.length} ${t("popupStatEmotes")}`
-      : "—";
+      ? `${fmtBytes(bytes)} Â· ${list.length} ${t("popupStatEmotes")}`
+      : "â€”";
     // 4x warning: visible while 4x mode is on and its cache pass is pending.
     els.emoteHqWarn.hidden = !(els.emoteHq.checked && !!c && !c.done4x);
     // Progress bar over the writer's own counters; ETA assumes the fixed
@@ -493,7 +506,7 @@ const refreshStats = (): void => {
           ? `${Math.floor(etaSec / 60)}p ${etaSec % 60}s`
           : `${etaSec}s`;
       els.statBarText.textContent =
-        `${cached}/${total} · ` + t("popupStatEta").replace("{s}", eta);
+        `${cached}/${total} Â· ` + t("popupStatEta").replace("{s}", eta);
     }
   });
 };

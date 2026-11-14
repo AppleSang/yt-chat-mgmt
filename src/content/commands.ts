@@ -1,5 +1,5 @@
-import { t } from "../shared/i18n";
-import type { ChatRole, DeletedLogEntry } from "../shared/types";
+﻿import { t } from "../language/i18n";
+import type { ChatRole, DeletedLogEntry } from "../language/types";
 import { config, isBot } from "./config";
 import { getAvatarUrl, getRole, MESSAGE_SELECTOR, qsOne } from "./dom";
 import { log, sleep } from "./logger";
@@ -12,8 +12,8 @@ const CREATE_POLL_URL =
   "https://www.youtube.com/youtubei/v1/live_chat/create_poll?prettyPrint=false";
 
 const REMOVE_LABELS = [
-  "remove", "delete", "xoá", "xóa", "移除", "削除", "삭제", "删除", "刪除",
-  "eliminar", "supprimer", "remover", "entfernen", "удалить"
+  "remove", "delete", "xoÃ¡", "xÃ³a", "ç§»é™¤", "å‰Šé™¤", "ì‚­ì œ", "åˆ é™¤", "åˆªé™¤",
+  "eliminar", "supprimer", "remover", "entfernen", "ÑƒÐ´Ð°Ð»Ð¸Ñ‚ÑŒ"
 ];
 
 const processed = new WeakSet<HTMLElement>();
@@ -334,11 +334,11 @@ const createPollViaApi = async (
 ): Promise<string | null> => {
   const root = document.documentElement;
   const clientVersion = root.dataset.ytcccClientVersion;
-  if (!clientVersion) return "thiếu clientVersion";
+  if (!clientVersion) return "thiáº¿u clientVersion";
   await seedPollParams();
   const params = root.dataset.ytcccPollParams;
   if (!params) {
-    return "thiếu params — hãy tạo 1 bình chọn thủ công trong khung chat trước";
+    return "thiáº¿u params â€” hÃ£y táº¡o 1 bÃ¬nh chá»n thá»§ cÃ´ng trong khung chat trÆ°á»›c";
   }
 
   try {
@@ -387,10 +387,10 @@ const createPollViaApi = async (
     });
     log("create_poll API status:", res.status);
     if (!res.ok) log("create_poll body:", (await res.text()).slice(0, 300));
-    return res.ok ? null : `máy chủ trả về ${res.status}`;
+    return res.ok ? null : `mÃ¡y chá»§ tráº£ vá» ${res.status}`;
   } catch (e) {
     log("create_poll error:", (e as Error)?.message);
-    return `lỗi mạng: ${(e as Error)?.message || "không rõ"}`;
+    return `lá»—i máº¡ng: ${(e as Error)?.message || "khÃ´ng rÃµ"}`;
   }
 };
 
@@ -454,7 +454,7 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
     ((qsOne(el, "#author-name") as HTMLElement | null)?.textContent?.trim()) ||
     t("unknownAuthor");
   // Bot hiding is its own feature and runs regardless of the cleanup
-  // switch — the toast duration (botToastSeconds) is its only setting.
+  // switch â€” the toast duration (botToastSeconds) is its only setting.
   if (isBot(author)) {
     processed.add(el);
     log("hide bot:", author);

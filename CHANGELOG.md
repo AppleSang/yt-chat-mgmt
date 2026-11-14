@@ -2,6 +2,14 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.98
+- **Đổi tên thư mục `src/shared` → `src/language`** (cập nhật toàn bộ import trong source + docs), kèm **README hướng dẫn tự thêm ngôn ngữ mới** (`src/language/README.md`): copy locale, dịch value, đăng ký `LanguageCode` + `LOCALES`/`LANGUAGES`, build.
+- Kiểm chứng: build sạch, harness 16/16, jsdom picker 35/35, cache 11/11.
+
+## 1.0.97
+- **Nút "Báo lỗi" trong footer popup thay cho chữ "Language"**: kiểu nút GitHub (icon issue-opened SVG + chữ, i18n `popupReportIssue` vi/en) — bấm mở trang tạo issue mới `github.com/AppleSang/yt-chat-mgmt/issues/new` (qua `chrome.tabs.create`, không cần quyền tabs). Select đổi ngôn ngữ giữ nguyên bên cạnh.
+- Kiểm chứng: build sạch, harness 16/16, jsdom picker 35/35, cache 11/11.
+
 ## 1.0.96
 - **Ẩn bot không còn phụ thuộc công tắc dọn chat**: nhánh bot trong `processMessage` được dịch lên trước cổng `config.enabled` — tắt "Cleanup commands" vẫn ẩn bot + hiện toast (toast theo riêng `botToastSeconds`). Cleanup lệnh `!` vẫn tuân theo công tắc như cũ.
 - Kiểm chứng: build sạch, harness 16/16, jsdom picker 35/35, cache 11/11.

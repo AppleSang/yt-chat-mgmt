@@ -20,6 +20,7 @@ export const en = {
   popupClear: "Clear",
   popupNoData: "No data yet",
   popupLanguage: "Language",
+  popupReportIssue: "Report an issue",
   popupStatsCard: "Stats",
   popupStatCache: "Cache size",
   popupStatEta: "about {s} left",
