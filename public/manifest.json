@@ -3,7 +3,7 @@
   "name": "yt-chat-mgmt",
   "short_name": "yt-chat-mgmt",
   "description": "Command cleaner, Hide bot and support 7TV for Youtube chat.",
-  "version": "1.0.93",
+  "version": "1.0.9",
   "permissions": ["storage"],
   "host_permissions": ["https://*.youtube.com/*", "https://7tv.io/*"],
   "background": {
