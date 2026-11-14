@@ -1,6 +1,7 @@
 name: Release
 
-
+# Publishes a stable release only when the manifest version changes —
+# bump-version.ps1 touches exactly this file, so a version bump IS a release.
 on:
   push:
     branches: [main]
@@ -36,13 +37,16 @@ jobs:
 
       - name: Build release notes
         run: |
-          awk -v head="## ${VERSION}" '
-            $0 == head {f = 1; next}
-            /^## / {f = 0}
-            f
-          ' CHANGELOG.md > release_body.md
-          if [ -s release_body.md ]; then printf '\n' >> release_body.md; fi
-          cat >> release_body.md <<EOF
+          # Body: install pointers (VI + EN, bold, flag emojis) + banner. The
+          # tag-to-tag compare link is appended automatically by GitHub
+          # (generate_release_notes). PNG because GitHub does not
+          # inline-render SVG in release notes; the file ships as an asset
+          # of this same release.
+          cat > release_body.md <<EOF
+          🇻🇳 **Hướng dẫn cài đặt: [tại đây](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.vi.md#c%C3%A0i-%C4%91%E1%BA%B7t)**
+
+          🇬🇧 **Install guide: [here](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.md#install)**
+
           ---
 
           <p align="center"><img src="https://raw.githubusercontent.com/AppleSang/yt-chat-mgmt/refs/heads/main/yt-chat-mgmt-banner.svg" alt="yt-chat-mgmt" /></p>
@@ -55,17 +59,42 @@ jobs:
           name: yt-chat-mgmt v${{ env.VERSION }}
           prerelease: false
           body_path: release_body.md
+          # Appends GitHub's auto notes (with the tag-to-tag compare link)
+          # AFTER the body above.
           generate_release_notes: true
           files: |
             yt-chat-mgmt-v${{ env.VERSION }}.zip
+            yt-chat-mgmt-banner.png
 
       - name: Remove source-code archives from the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # GitHub auto-attaches "Source code (zip/tar.gz)" to every release;
-          # the download page should only offer the built extension zip.
-          RID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${VERSION}" --jq '.id')
-          for id in $(gh api "repos/${GITHUB_REPOSITORY}/releases/${RID}/assets" --jq '.[] | select(.name | startswith("Source code")) | .id'); do
-            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${id}" > /dev/null
+          # GitHub auto-attaches "Source code (zip/tar.gz)" and there is no
+          # way to prevent them — they can only be deleted after creation.
+          # They are generated asynchronously, so a single check right after
+          # the release step may see nothing (silent no-op). Poll briefly:
+          # delete whenever they appear, stop once deleted and confirmed gone.
+          deleted=0
+          for i in $(seq 1 15); do
+            IDS=$(gh release view "v${VERSION}" --json assets \
+              -q '.assets[] | select(.name == "Source code (zip)" or .name == "Source code (tar.gz)") | .id' || true)
+            if [ -n "$IDS" ]; then
+              for id in $IDS; do
+                echo "deleting source archive asset: $id"
+                gh release delete-asset "v${VERSION}" "$id" --yes
+              done
+              deleted=1
+              sleep 2
+              continue
+            fi
+            if [ "$deleted" = "1" ]; then
+              echo "Source archives removed."
+              exit 0
+            fi
+            echo "attempt ${i}: source archives not visible yet"
+            sleep 2
           done
+          if [ "$deleted" = "0" ]; then
+            echo "::warning::Source archives never appeared within the wait window; nothing deleted."
+          fi
