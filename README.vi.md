@@ -19,7 +19,7 @@ English: [README.md](README.md)
 - Gọi emoji là gõ keyword vào ô chat; gõ `|emoji7tv` — hoặc gõ đủ keyword — là tự thành emoji.
 - Render emoji của 7TV với chất lượng cao
 
-## Cài đặt
+## 📥 Cài đặt 📥
 
 1. Tải extension tại [đây](https://github.com/AppleSang/yt-chat-mgmt/releases) | Tải file đuôi .zip (không phải source code đâu).
 3. Mở `chrome://extensions`.
