@@ -71,7 +71,7 @@ jobs:
 
           ---
 
-          <p align="center"><img src="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/yt-chat-mgmt-banner.png" alt="yt-chat-mgmt" /></p>
+          <p align="center"><img src="https://raw.githubusercontent.com/AppleSang/yt-chat-mgmt/refs/heads/main/yt-chat-mgmt-banner.svg" alt="yt-chat-mgmt" /></p>
           EOF
 
       - name: Create release

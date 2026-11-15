@@ -2,7 +2,7 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
-## 1.0.101
+## 1.0.102
 - **`:` không còn gọi nhầm emote extension**: gõ `:yt` + Tab từng hoàn tất thành emote custom `yt-chat-mgmt` (trùng tiền tố "yt") — dấu `:` là namespace emoji của YouTube, giờ luồng Tab "từ trần" bỏ qua token bắt đầu bằng `:` để YouTube tự xử lý native; từ trần không dấu vẫn hoàn tất emote custom như cũ (`|` = mọi nguồn, `[` = custom, `:` = YouTube).
 - **Chuột phải không bị nuốt nữa**: các mousedown handler của nút 7TV (icon + avatar), item emote trong grid 7TV và suggest picker trước đây `preventDefault` cho cả chuột phải/m giữa — giờ chỉ can thiệp **chuột trái** (`e.button !== 0` thì bỏ qua), để menu chuột phải native mở bình thường thay vì bị chặn.
 - **Hint ký tự gọi emoji**: title card "Cài đặt 7TV" trong popup có thêm ghi chú đẩy sang phải "Ký tự gọi emoji: |" (i18n `popup7tvTrigger` vi/en).

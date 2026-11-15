@@ -2,7 +2,7 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
-## 1.0.101
+## 1.0.102
 - **`:` no longer completes extension emotes by accident**: typing `:yt` + Tab used to complete the custom emote `yt-chat-mgmt` (it shares the "yt" prefix) — the `:` is YouTube's own emoji namespace, so the bare-word Tab flow now skips tokens starting with `:` and leaves them to YouTube's native handling; bare words without a colon still complete custom emotes as before (`|` = all sources, `[` = custom, `:` = YouTube).
 - **Right-click is no longer swallowed**: the mousedown handlers on the 7TV buttons (icon + avatars), the 7TV grid items and the suggest picker used to `preventDefault` for right/middle clicks too — they now only act on the **primary button** (`e.button !== 0` returns early), so the native context menu opens normally instead of being blocked.
 - **Trigger-char hint**: the "7TV settings" card title in the popup gains a right-aligned note "Emote trigger: |" (i18n key `popup7tvTrigger` vi/en).
