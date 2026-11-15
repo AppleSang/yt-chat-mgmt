@@ -11,7 +11,7 @@ English: [README.md](README.md)
 - Tự bật chế độ "Trò chuyện trực tiếp".
 - Ẩn badge hội viên / mod và avatar người chat.
 - Ẩn bot (`@nightbot`, `@streamelements`, …) — tin nhắn của bot hiện thành toast.
-- Nhật ký kênh chat khi sử dụng lệnh - tránh gặp những trường hợp cần nắm thông tin.
+- Nhật ký kênh chat khi sử dụng lệnh - trong những trường hợp cần nắm thông tin mà extension đã dọn.
 
 **Emoji 7TV**
 - Sử dụng được emoji của 7TV trực tiếp ngay trong kênh chat
