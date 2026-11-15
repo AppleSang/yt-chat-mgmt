@@ -19,7 +19,7 @@ Tiếng Việt: [README.vi.md](README.vi.md)
 - To call an emote, type its keyword in the chat box: type `|emote7tv` — or the full keyword — and it turns into the emote automatically.
 - Renders 7TV emotes in high quality.
 
-## Install
+## 📥 Install 📥
 
 1. Download the extension [here](https://github.com/AppleSang/yt-chat-mgmt/releases) | grab the .zip file (not the source code).
 2. Open `chrome://extensions`.
