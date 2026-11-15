@@ -1,4 +1,6 @@
+import { t } from "../language/i18n";
 import type { ToastOptions } from "../language/types";
+import { config, onToastPositionChange } from "./config";
 import { ROLE_COLORS } from "./dom";
 
 const injectToastStyles = (): void => {
@@ -7,16 +9,39 @@ const injectToastStyles = (): void => {
   style.id = "ytccc-toast-styles";
   style.textContent = `
 #ytccc-toasts {
-  position: fixed;
-  bottom: 72px;
-  left: 12px;
-  right: 12px;
+  /* Overlay the chat column instead of re-flowing it: an in-flow stack
+     pushed the message list around on every toast. absolute ALSO activates
+     the z-index (static boxes ignore it), so the stack paints above the
+     list. The container is only ever appended inside
+     yt-live-chat-renderer #chat — one iframe document — so the absolute
+     box can never spill into main-page frames. */
+  position: absolute;
   z-index: 2147483647;
+  left: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   pointer-events: none;
   font-family: Roboto, Arial, sans-serif;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  max-height: 45%;
+  overflow: hidden;
+}
+#ytccc-toasts.ytccc-dock-top {
+  top: 8px;
+}
+#ytccc-toasts.ytccc-dock-bottom {
+  bottom: 8px;
+}
+/* Zero footprint while empty: until the first toast arrives the stack must
+   not reserve a strip of the chat column. :empty is reliable here because
+   only element nodes are ever appended (no stray text nodes). */
+#ytccc-toasts:empty {
+  width: 0;
+  height: 0;
+  margin: 0;
+  display: none;
 }
 .ytccc-toast {
   display: flex;
@@ -77,17 +102,75 @@ const injectToastStyles = (): void => {
 
 export const initToasts = (): void => {
   injectToastStyles();
+  // Config already carries the new position when listeners run, so moving
+  // the stack first makes the preview appear in the freshly chosen slot.
+  onToastPositionChange(() => {
+    const container = document.getElementById("ytccc-toasts");
+    if (container) placeContainer(container);
+    showPreviewToast();
+  });
+};
+
+// The chat column only exists inside the live-chat document (the chat iframe
+// embedded on watch / studio pages). Scoping the lookup this tightly keeps
+// the main page frames — which can also carry an unrelated id="chat" wrapper
+// — completely toast-free.
+const findChatColumn = (): HTMLElement | null => {
+  const root = document.documentElement;
+  return ((root.querySelector("yt-live-chat-app yt-live-chat-renderer #chat") ||
+    root.querySelectorAll("yt-live-chat-app yt-live-chat-renderer #chat")[0] ||
+    null) as HTMLElement | null);
+};
+
+// Dock the container inside YouTube's #chat column (first child = above the
+// message list, last child = below it). Returns the placed container, or
+// null when there is no chat column — toasts never leave the chat renderer.
+const placeContainer = (container: HTMLElement): HTMLElement | null => {
+  const chat = findChatColumn();
+  if (!chat) return null;
+  const inPlace =
+    container.parentElement === chat &&
+    (config.toastPosition === "top"
+      ? chat.firstElementChild === container
+      : chat.lastElementChild === container);
+  if (!inPlace) {
+    if (config.toastPosition === "top") chat.insertBefore(container, chat.firstChild);
+    else chat.appendChild(container);
+  }
+  container.classList.add("ytccc-docked");
+  // CSS classes drive the absolute anchor (top vs bottom edge); toggling
+  // keeps a reused container in sync with the current setting.
+  container.classList.toggle("ytccc-dock-top", config.toastPosition === "top");
+  container.classList.toggle("ytccc-dock-bottom", config.toastPosition !== "top");
+  return container;
+};
+
+// Preview shown right after the position option changes: extension avatar +
+// brand name + a localized pointer to the GitHub repo (URL auto-links below).
+// Duration follows the bot-toast display-time setting so the preview shows
+// exactly as long as real toasts will; a 0s setting still keeps showToast's
+// ~2.8s floor so the preview stays readable.
+export const showPreviewToast = (): void => {
+  showToast({
+    title: "yt-chat-mgmt",
+    body: t("toastPreviewBody"),
+    avatar: chrome.runtime.getURL("icons/icon128.png"),
+    role: "viewer",
+    duration: config.botToastSeconds * 1000
+  });
 };
 
 export const showToast = (opts: ToastOptions): void => {
   const { title, body, avatar, role, duration } = opts;
   try {
-    let container = document.getElementById("ytccc-toasts");
+    let container = document.getElementById("ytccc-toasts") as HTMLElement | null;
     if (!container) {
       container = document.createElement("div");
       container.id = "ytccc-toasts";
-      document.body.appendChild(container);
     }
+    // Outside the live chat renderer (main page frames, etc.) there is no
+    // dock target: stay silent instead of spilling a floating overlay.
+    if (!placeContainer(container)) return;
     while (container.children.length >= 4) {
       container.firstChild!.remove();
     }

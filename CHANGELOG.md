@@ -2,6 +2,26 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.101
+- **`:` không còn gọi nhầm emote extension**: gõ `:yt` + Tab từng hoàn tất thành emote custom `yt-chat-mgmt` (trùng tiền tố "yt") — dấu `:` là namespace emoji của YouTube, giờ luồng Tab "từ trần" bỏ qua token bắt đầu bằng `:` để YouTube tự xử lý native; từ trần không dấu vẫn hoàn tất emote custom như cũ (`|` = mọi nguồn, `[` = custom, `:` = YouTube).
+- **Chuột phải không bị nuốt nữa**: các mousedown handler của nút 7TV (icon + avatar), item emote trong grid 7TV và suggest picker trước đây `preventDefault` cho cả chuột phải/m giữa — giờ chỉ can thiệp **chuột trái** (`e.button !== 0` thì bỏ qua), để menu chuột phải native mở bình thường thay vì bị chặn.
+- **Hint ký tự gọi emoji**: title card "Cài đặt 7TV" trong popup có thêm ghi chú đẩy sang phải "Ký tự gọi emoji: |" (i18n `popup7tvTrigger` vi/en).
+- Kiểm chứng: build sạch; harness 24/24 (thêm test `:` + Tab); picker 35/35; cache 11/11; dock/preview 18/18.
+
+## 1.0.100
+- **Toast đè lên chat thay vì đẩy chat**: container `#ytccc-toasts` chuyển từ in-flow sang `position: absolute` (trong chính tài liệu chat) — stack không còn chiếm chỗ làm list chat bị xê dịch mỗi khi toast xuất hiện; `z-index` tối đa từ trước giờ mới thực sự có tác dụng (box static bỏ qua z-index). Anchor theo lựa chọn qua class `.ytccc-dock-top`/`.ytccc-dock-bottom` (top 8px / bottom 8px, lệch trái 12px, `width: fit-content` bám size toast); vẫn dock trong `#chat` của `yt-live-chat-renderer` như 1.0.99 nên không thể tràn sang frame chính.
+- **Rỗng = chiếm 0 chỗ**: `#ytccc-toasts:empty` → ẩn hẳn (`display:none`, width/height 0, bỏ margin).
+- **Toast preview theo thời lượng cài đặt**: preview khi đổi vị trí toast dùng đúng `botToastSeconds` (mặc định 10s) thay vì 4500ms cứng.
+- **Trigger `[` cho emote custom (emotes.json)**: gõ `[tên` mở suggest picker như `|` với 7TV, nhưng pool riêng chỉ gợi ý emote custom (`|` vẫn gợi ý mọi nguồn như cũ); gõ đủ `[yt-chat-mgmt` tự thành emote (tự thêm space), Tab/Enter/mũi tên/bấm trên picker hoạt động như flow `|`.
+- **Sửa sót ký tự trigger khi gõ đủ tên**: gõ đủ `|sangroll` từng để lại dấu `|` trong tin nhắn gửi đi (slice `before` sai chỉ số sau ký tự trigger); giờ cả `|` lẫn `[` đều bị xoá sạch khi tự hoàn tất.
+- Kiểm chứng: build sạch; harness 23/23 (thêm 7 test: `[` picker/pool 7TV-autoconvert/Tab + không sót `|`/`[`); picker 35/35; cache 11/11; dock/preview 18/18 (thêm `:empty`, class dock, duration theo setting).
+
+## 1.0.99
+- **Tùy chọn vị trí toast trong popup**: hàng "Vị trí toast" với 2 ô vẽ SVG (toast docked ở **trên** hoặc **dưới** cột chat) — chọn 1 trong 2, container `#ytccc-toasts` được dock vào trong `#chat` của YouTube (con đầu/cuối, class `.ytccc-docked`, in-flow thật chứ không phải overlay); không tìm thấy `#chat` thì fallback về overlay nổi trên `body` như cũ.
+- **Preview khi đổi lựa chọn**: đổi vị trí là toast preview tự hiện ngay trong chat YouTube — avatar là icon extension, tên `yt-chat-mgmt`, nội dung i18n kèm link GitHub (`toastPreviewBody` vi/en, URL tự thành link bấm được); manifest thêm `icons/*` vào `web_accessible_resources`.
+- **Khoá toast trong phạm vi chat renderer**: frame chính của Studio / trang watch (cũng chạy content script, và có thể mang `id="chat"` riêng) từng làm toast tràn ra ngoài chat (overlay full-width đáy Studio, toast đè lên đầu cột chat watch). Giờ tra cứu `#chat` chỉ trong `yt-live-chat-app yt-live-chat-renderer`; không có chat renderer thì **không hiện toast** (bỏ hẳn fallback nổi trên `body`, container luôn in-flow trong `#chat`).
+- Phát hiện + sửa harness 16-test còn trỏ nhầm `dist` của thư mục cũ (v1.0.70) — giờ test đúng bundle hiện tại; thêm test riêng cho dock/preview (12/12). Kiểm chứng: build sạch, harness 16/16, jsdom picker 35/35, cache 11/11.
+
 ## 1.0.98
 - **Đổi tên thư mục `src/shared` → `src/language`** (cập nhật toàn bộ import trong source + docs), kèm **README hướng dẫn tự thêm ngôn ngữ mới** (`src/language/README.md`): copy locale, dịch value, đăng ký `LanguageCode` + `LOCALES`/`LANGUAGES`, build.
 - Kiểm chứng: build sạch, harness 16/16, jsdom picker 35/35, cache 11/11.

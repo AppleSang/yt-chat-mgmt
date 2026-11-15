@@ -12,11 +12,21 @@ const DEFAULTS: ExtensionConfig = {
   modPoll: false,
   botList: "@nightbot, @streamelements, @streamlabs",
   botToastSeconds: 10,
+  toastPosition: "bottom",
   emoteHq: false,
   language: DEFAULT_LANGUAGE
 };
 
 export let config: ExtensionConfig = { ...DEFAULTS };
+
+// Position changes come from a single popup toggle, so a plain listener
+// array is enough and keeps config from importing the toast module.
+type ToastPositionListener = (pos: ExtensionConfig["toastPosition"]) => void;
+const toastPositionListeners: ToastPositionListener[] = [];
+
+export const onToastPositionChange = (fn: ToastPositionListener): void => {
+  toastPositionListeners.push(fn);
+};
 
 let botNames: string[] = [];
 
@@ -54,6 +64,7 @@ export const loadConfig = async (): Promise<void> => {
           ? Math.min(35, Math.max(0, Math.floor(secs)))
           : 10;
       })(),
+      toastPosition: stored.toastPosition === "top" ? "top" : "bottom",
       emoteHq: !!stored.emoteHq,
       language: lang
     };
@@ -87,6 +98,11 @@ export const watchConfig = (): void => {
         : 10;
     }
     if (changes.emoteHq) config.emoteHq = !!changes.emoteHq.newValue;
+    if (changes.toastPosition) {
+      config.toastPosition =
+        changes.toastPosition.newValue === "top" ? "top" : "bottom";
+      for (const fn of toastPositionListeners) fn(config.toastPosition);
+    }
     if (changes.language) setLanguage(changes.language.newValue);
     log("config updated:", JSON.stringify(config));
   });

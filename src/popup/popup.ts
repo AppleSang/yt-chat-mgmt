@@ -19,6 +19,8 @@ const els = {
   botList: $("botList") as HTMLInputElement,
   botToastSeconds: $("botToastSeconds") as HTMLInputElement,
   botToastVal: $("botToastVal") as HTMLElement,
+  toastPosTop: $("toastPosTop") as HTMLButtonElement,
+  toastPosBottom: $("toastPosBottom") as HTMLButtonElement,
   sevenTvSearch: $("sevenTvSearch") as HTMLInputElement,
   sevenTvResults: $("sevenTvResults") as HTMLElement,
   sevenTvAdded: $("sevenTvAdded") as HTMLElement,
@@ -189,6 +191,7 @@ const loadAll = (): void => {
       hideAvatars: false,
       botList: "@nightbot, @streamelements, @streamlabs",
       botToastSeconds: 10,
+      toastPosition: "bottom",
       emoteSetIds: "",
       emoteUsers: [],
       emoteHq: false
@@ -204,6 +207,7 @@ const loadAll = (): void => {
       const safe = Number.isFinite(secs) ? Math.min(35, Math.max(0, Math.floor(secs))) : 10;
       els.botToastSeconds.value = String(safe);
       els.botToastVal.textContent = safe === 0 ? t("popupOff") : `${safe}s`;
+      setToastPos(cfg.toastPosition === "top" ? "top" : "bottom");
       els.sevenTvSearch.value = "";
       els.sevenTvResults.dataset.ids = String(cfg.emoteSetIds || "");
       addedUsers = Array.isArray(cfg.emoteUsers) ? (cfg.emoteUsers as AddedUser[]) : [];
@@ -245,6 +249,22 @@ els.botToastSeconds.addEventListener("input", () => {
   const v = Number(els.botToastSeconds.value) || 0;
   els.botToastVal.textContent = v === 0 ? t("popupOff") : `${v}s`;
   save("botToastSeconds", v);
+});
+
+// Radio behaviour for the toast placement tiles: exactly one is pressed.
+// Saving lets the content script dock the stack and fire the preview toast.
+type ToastPos = "top" | "bottom";
+const setToastPos = (pos: ToastPos): void => {
+  els.toastPosTop.setAttribute("aria-pressed", pos === "top" ? "true" : "false");
+  els.toastPosBottom.setAttribute("aria-pressed", pos === "bottom" ? "true" : "false");
+};
+els.toastPosTop.addEventListener("click", () => {
+  setToastPos("top");
+  save("toastPosition", "top");
+});
+els.toastPosBottom.addEventListener("click", () => {
+  setToastPos("bottom");
+  save("toastPosition", "bottom");
 });
 
 els.clearLog.addEventListener("click", () => {

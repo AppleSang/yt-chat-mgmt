@@ -57,6 +57,13 @@ body {
   grid-template-rows: 1fr auto;
 }
 
+/* Trigger-char hint sits at the far end of the 7TV card head. */
+.trigger-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-subtle);
+}
+
 /* ---------- 7TV user search + sets ---------- */
 .stv-results {
   display: flex;
@@ -342,6 +349,42 @@ footer.lang-footer {
   flex-direction: column;
   gap: 2px;
   margin-top: 8px;
+}
+
+/* ---------- Toast placement (radio pair) ---------- */
+.toast-pos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.toast-pos-opt {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: 8px 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+
+.toast-pos-opt:hover {
+  border-color: var(--hairline-strong);
+  color: var(--ink);
+}
+
+.toast-pos-opt[aria-pressed="true"] {
+  border-color: var(--primary);
+  color: var(--ink);
+  box-shadow: var(--focus-ring);
+}
+
+.toast-pos-opt svg {
+  display: block;
 }
 
 /* 4x cache still in progress: 4x toggle runs on 2x for now */

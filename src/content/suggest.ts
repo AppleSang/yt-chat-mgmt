@@ -60,6 +60,23 @@ const buildEmoteFrag = (kw: Emote, addSpace: boolean): DocumentFragment => {
   return frag;
 };
 
+// Trigger tokens that open the inline suggest picker. "|" is the classic
+// all-sources trigger (7TV + custom); "[" lists only the custom emotes
+// declared in emotes.json — same autocomplete flow, narrower pool.
+interface TriggerMatch {
+  trigger: string;
+  query: string;
+  pool: "all" | "custom";
+}
+
+const findTrigger = (text: string): TriggerMatch | null => {
+  const bar = text.match(/\|([^\s|]*)$/);
+  if (bar) return { trigger: "|", query: bar[1], pool: "all" };
+  const brk = text.match(/\[([^\s\[]*)$/);
+  if (brk) return { trigger: "[", query: brk[1], pool: "custom" };
+  return null;
+};
+
 export const insertEmote = (keyword: string): void => {
   const field = lastField || getInputField();
   if (!field) return;
@@ -80,10 +97,15 @@ export const insertEmote = (keyword: string): void => {
     ) {
       const anchor = sel.anchorNode as Text;
       const before = (anchor.nodeValue || "").slice(0, sel.anchorOffset);
-      const m = before.match(/\|[^\s|]*$/);
+      const tm = findTrigger(before);
       const range = document.createRange();
-      // Replace the "|query" token when present, else insert at the caret.
-      if (m) range.setStart(anchor, sel.anchorOffset - m[0].length);
+      // Replace the trailing trigger token ("|query" / "[query") when
+      // present, else insert at the caret.
+      if (tm)
+        range.setStart(
+          anchor,
+          sel.anchorOffset - (tm.trigger.length + tm.query.length)
+        );
       else range.setStart(anchor, sel.anchorOffset);
       range.setEnd(anchor, sel.anchorOffset);
       range.deleteContents();
@@ -97,8 +119,10 @@ export const insertEmote = (keyword: string): void => {
   }
   // Fallback: rebuild the field content from scratch.
   const current = stripInvisibleTail(field.textContent || "");
-  const m2 = current.match(/\|([^\s|]*)$/);
-  const base = m2 ? current.slice(0, current.length - m2[0].length) : current;
+  const tm2 = findTrigger(current);
+  const base = tm2
+    ? current.slice(0, current.length - (tm2.trigger.length + tm2.query.length))
+    : current;
   field.textContent = base;
   field.appendChild(buildEmoteFrag(kw, true));
   placeCaretEnd(field);
@@ -128,18 +152,23 @@ const insertEmoteText = (keyword: string): void => {
   if (anchor) {
     const val = anchor.nodeValue || "";
     const off = sel!.anchorOffset;
-    // Complete a trailing "|query" token (suggest flow) instead of stacking.
-    const m = val.slice(0, off).match(/\|[^\s|]*$/);
-    const at = m ? off - m[0].length : off;
+    // Complete a trailing trigger token ("|query" / "[query") from the
+    // suggest flow instead of stacking.
+    const tm = findTrigger(val.slice(0, off));
+    const at = tm ? off - (tm.trigger.length + tm.query.length) : off;
     anchor.insertData(at, text);
   } else {
-    // Append at the end, completing a trailing "|query" token if the last
+    // Append at the end, completing a trailing trigger token if the last
     // text node carries one; existing content (spaces included) stays put.
     const node = lastTextNode(field);
     if (node) {
       const val = node.nodeValue || "";
-      const m2 = val.match(/\|[^\s|]*$/);
-      if (m2) node.nodeValue = val.slice(0, val.length - m2[0].length);
+      const tm = findTrigger(val);
+      if (tm)
+        node.nodeValue = val.slice(
+          0,
+          val.length - (tm.trigger.length + tm.query.length)
+        );
     }
     field.appendChild(document.createTextNode(text));
   }
@@ -302,6 +331,9 @@ const makeStvCatButton = (size = 36): HTMLElement => {
   btn.dataset.ytcccSize = String(size);
   btn.innerHTML = STV_ICON_SVG;
   btn.addEventListener("mousedown", (e) => {
+    // Primary button only: right/middle clicks keep native behavior
+    // (context menu, autoscroll) instead of being swallowed here.
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
   });
@@ -329,6 +361,9 @@ const makeStvAvatarButton = (u: StvUserLite, size = 36): HTMLElement => {
   img.style.cssText = "width:24px;height:24px;object-fit:cover;border-radius:50%;";
   btn.appendChild(img);
   btn.addEventListener("mousedown", (e) => {
+    // Primary button only: right/middle clicks keep native behavior
+    // (context menu, autoscroll) instead of being swallowed here.
+    if (e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
   });
@@ -571,6 +606,8 @@ export const injectIntoCatalog = (): void => {
 
   if (!catalogBound.has(picker)) {
     picker.addEventListener("mousedown", (e) => {
+      // Right/middle clicks keep native behavior (context menu on the grid).
+      if ((e as MouseEvent).button !== 0) return;
       const item = (e.target as HTMLElement).closest?.(".ytccc-stv-emoji");
       if (!item) return;
       e.preventDefault();
@@ -648,6 +685,8 @@ const renderPicker = (field: Field, matches: { keyword: string }[]): void => {
       "position:fixed;z-index:2147483647;background:#202124;border:1px solid #3c4043;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.5);padding:6px;display:flex;flex-direction:column;gap:2px;transform:translateY(-100%);max-width:280px;font-family:Roboto,Arial,sans-serif;";
     document.body.appendChild(pickerEl);
     pickerEl.addEventListener("mousedown", (e) => {
+      // Right/middle clicks keep native behavior (context menu on the list).
+      if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
       const item = (e.target as HTMLElement).closest?.("[data-keyword]");
@@ -684,14 +723,16 @@ const updatePickerFromField = (field: Field | null): void => {
     return;
   }
   const current = stripInvisibleTail(field.textContent || "");
-  const m = current.match(/\|([^\s|]*)$/);
+  const tm = findTrigger(current);
   const all = getEmotes();
-  if (!m || !all.length || !m[1]) {
+  if (!tm || !all.length || !tm.query) {
     closePicker();
     return;
   }
-  const q = m[1].toLowerCase();
-  const matches = all
+  // "[" lists custom (emotes.json) emotes only; "|" still spans every source.
+  const pool = tm.pool === "custom" ? all.filter((e) => e.source !== "7tv") : all;
+  const q = tm.query.toLowerCase();
+  const matches = pool
     .filter((e) => e.keyword.toLowerCase().startsWith(q))
     .slice(0, 12);
   renderPicker(field, matches);
@@ -930,43 +971,54 @@ const tryAutoComplete = (field: Field | null): boolean => {
   if (!field || !all.length) return false;
   markEmoteField(field);
   const current = stripInvisibleTail(field.textContent || "");
-  const m = current.match(/\|([^\s|]+)$/);
+  // Auto-convert needs at least one query character after the trigger; a
+  // lone "|" or "[" falls through to the bare-word path below.
+  const tm0 = findTrigger(current);
+  const tm = tm0 && tm0.query ? tm0 : null;
   const node = lastTextNode(field);
   if (!node) return false;
   const val = node.nodeValue || "";
   let tail: string;
-  let idx: number;
-  if (m) {
-    tail = m[1];
-    idx = val.toLowerCase().lastIndexOf("|" + tail.toLowerCase());
-    if (idx === -1) return false;
-    idx += 1;
+  let start: number;
+  let triggered = false;
+  if (tm) {
+    tail = tm.query;
+    start = val.toLowerCase().lastIndexOf((tm.trigger + tail).toLowerCase());
+    if (start === -1) return false;
+    triggered = true;
   } else {
-    // Full name without "|" converts to the emote. Zero-width markers next
-    // to previously inserted emotes are stripped for matching so new words
-    // typed after them still convert.
+    // Full name without a trigger converts to the emote. Zero-width markers
+    // next to previously inserted emotes are stripped for matching so new
+    // words typed after them still convert.
     const clean = val.replace(/\u200b/g, "");
     const bm = clean.match(/([^\s|]+)$/);
     if (!bm) return false;
     tail = bm[1];
-    idx = val.toLowerCase().lastIndexOf(tail.toLowerCase());
-    if (idx === -1) return false;
+    start = val.toLowerCase().lastIndexOf(tail.toLowerCase());
+    if (start === -1) return false;
   }
-  const pool = m ? all : all.filter((e) => e.source !== "7tv");
+  // "|" spans every source; "[" and bare words convert custom emotes only
+  // (7TV emotes are triggered explicitly).
+  const pool = tm && tm.pool === "all" ? all : all.filter((e) => e.source !== "7tv");
   const kw = pool.find((e) => e.keyword.toLowerCase() === tail.toLowerCase());
   if (!kw) return false;
   const src = emoteSrc(kw);
   if (!src) return false;
-  const before = val.slice(0, idx);
-  const after = val.slice(idx + tail.length);
-  // Auto-space only completes from the "|" picker; plain typing converts
+  // `start` marks the beginning of the whole token, so the slice drops the
+  // trigger character too — a stray "|"/"[" left behind would leak into the
+  // sent message.
+  const before = val.slice(0, start);
+  const after = val.slice(
+    start + (triggered ? tm!.trigger.length : 0) + tail.length
+  );
+  // Auto-space only completes from a trigger picker; plain typing converts
   // without adding a space.
   const frag = document.createDocumentFragment();
   if (before) frag.appendChild(document.createTextNode(before));
-  frag.appendChild(buildEmoteFrag(kw, !!m));
+  frag.appendChild(buildEmoteFrag(kw, triggered));
   if (after) {
     frag.appendChild(document.createTextNode(after));
-  } else if (!m) {
+  } else if (!triggered) {
     // Keep a caret anchor outside the hidden span so the next typed
     // characters stay visible.
     frag.appendChild(document.createTextNode("\u200b"));
@@ -981,24 +1033,29 @@ const tabComplete = (field: Field | null): boolean => {
   const all = getEmotes();
   if (!field || !all.length) return false;
   const current = stripInvisibleTail(field.textContent || "");
-  const m = current.match(/\|([^\s|]*)$/);
-  if (m) {
-    const q = m[1].toLowerCase();
-    const hit = all.find((x) => x.keyword.toLowerCase().startsWith(q));
+  const tm = findTrigger(current);
+  if (tm) {
+    // "|" spans every source; "[" lists custom (emotes.json) emotes only.
+    const pool = tm.pool === "custom" ? all.filter((e) => e.source !== "7tv") : all;
+    const q = tm.query.toLowerCase();
+    const hit = pool.find((x) => x.keyword.toLowerCase().startsWith(q));
     if (!hit) return false;
     insertEmote(hit.keyword);
     closePicker();
     return true;
   }
-  // Bare-word completion (no "|" prefix): typing "app" or ":app" and hitting
-  // Tab converts the trailing token into the matching emote image.
+  // Bare-word completion (no trigger prefix): typing "app" and hitting Tab
+  // converts the trailing token into the matching custom emote image. A
+  // leading ":" is YouTube's own emoji namespace — never hijack it, so
+  // ":yt" + Tab keeps YouTube's native emoji autocomplete untouched.
   const clean = current.replace(/\u200b/g, "");
   const bm = clean.match(/([^\s|]+)$/);
   if (!bm) return false;
   const token = bm[1];
-  const q = token.replace(/^:/, "").toLowerCase();
-  // Direction 2: bare word / ":name" completes YouTube built-in emotes only
-  // (7TV emotes are triggered via "|").
+  if (token.startsWith(":")) return false;
+  const q = token.toLowerCase();
+  // Bare words convert custom (emotes.json) emotes only; 7TV emotes are
+  // triggered via "|".
   const pool = all.filter((e) => e.source !== "7tv");
   const hit = pool.find((x) => x.keyword.toLowerCase().startsWith(q));
   if (!hit) return false;

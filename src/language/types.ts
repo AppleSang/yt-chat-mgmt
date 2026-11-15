@@ -11,6 +11,8 @@ export interface ExtensionConfig {
   modPoll: boolean;
   botList: string;
   botToastSeconds: number;
+  /** Where the toast stack lives inside YouTube's #chat column. */
+  toastPosition: "top" | "bottom";
   emoteHq: boolean;
   language: LanguageCode;
 }

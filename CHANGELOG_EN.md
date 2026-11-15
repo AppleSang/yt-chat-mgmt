@@ -2,6 +2,26 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.101
+- **`:` no longer completes extension emotes by accident**: typing `:yt` + Tab used to complete the custom emote `yt-chat-mgmt` (it shares the "yt" prefix) — the `:` is YouTube's own emoji namespace, so the bare-word Tab flow now skips tokens starting with `:` and leaves them to YouTube's native handling; bare words without a colon still complete custom emotes as before (`|` = all sources, `[` = custom, `:` = YouTube).
+- **Right-click is no longer swallowed**: the mousedown handlers on the 7TV buttons (icon + avatars), the 7TV grid items and the suggest picker used to `preventDefault` for right/middle clicks too — they now only act on the **primary button** (`e.button !== 0` returns early), so the native context menu opens normally instead of being blocked.
+- **Trigger-char hint**: the "7TV settings" card title in the popup gains a right-aligned note "Emote trigger: |" (i18n key `popup7tvTrigger` vi/en).
+- Verified: clean build; harness 24/24 (new `:` + Tab test); picker 35/35; cache 11/11; dock/preview 18/18.
+
+## 1.0.100
+- **Toasts overlay the chat instead of pushing it**: the `#ytccc-toasts` container moved from in-flow to `position: absolute` (inside the chat document itself) — the stack no longer takes layout space, so the message list never shifts when a toast appears; the max `z-index` carried since before finally takes effect (static boxes ignore z-index). Anchoring follows the option via the `.ytccc-dock-top`/`.ytccc-dock-bottom` classes (top 8px / bottom 8px, 12px from the left, `width: fit-content` hugging the toast size); still docked inside `yt-live-chat-renderer`'s `#chat` as of 1.0.99, so it can never spill into main-page frames.
+- **Empty = zero footprint**: `#ytccc-toasts:empty` hides the stack entirely (`display:none`, width/height 0, no margin).
+- **Preview toast follows the configured display time**: the position-switch preview now uses `botToastSeconds` (10s default) instead of a hardcoded 4500ms.
+- **`[` trigger for custom emotes (emotes.json)**: typing `[name` opens the suggest picker just like `|` does for 7TV, but with its own pool listing custom emotes only (`|` still suggests every source as before); typing the full `[yt-chat-mgmt` auto-converts to the emote (auto-space added), and Tab/Enter/arrows/picker clicks work like the `|` flow.
+- **Fixed the trigger character leaking when typing a full name**: typing the full `|sangroll` used to leave the `|` inside the sent message (the `before` slice kept the offset past the trigger); both `|` and `[` are now removed cleanly on auto-complete.
+- Verified: clean build; harness 23/23 (7 new tests: `[` picker / 7TV-excluded pool / auto-convert / Tab + no `|`/`[` leak); picker 35/35; cache 11/11; dock/preview 18/18 (`:empty`, dock classes, setting-driven duration).
+
+## 1.0.99
+- **Toast position option in the popup**: a "Toast position" row with two SVG-drawn tiles (toast docked at the **top** or **bottom** of the chat column) — pick exactly one; the `#ytccc-toasts` container docks inside YouTube's `#chat` (first/last child, `.ytccc-docked` class, truly in-flow instead of an overlay); when `#chat` is absent it falls back to the floating body overlay as before.
+- **Preview on every switch**: changing the position instantly fires a preview toast inside the YouTube live chat — extension icon as avatar, `yt-chat-mgmt` as the name, localized body linking to GitHub (`toastPreviewBody` vi/en, URL auto-linked); manifest adds `icons/*` to `web_accessible_resources`.
+- **Toasts locked inside the chat renderer**: the main Studio / watch-page frames also run the content script (and may carry their own `id="chat"`), which used to let toasts spill outside the chat (full-width overlay at the bottom of Studio, a toast covering the top of the watch chat column). The `#chat` lookup is now scoped to `yt-live-chat-app yt-live-chat-renderer`; with no chat renderer present **no toast is shown at all** (the body floating fallback is gone — the container is always in-flow inside `#chat`).
+- Found + fixed the 16-test harness still pointing at the old folder's `dist` (v1.0.70) — it now tests the current bundle; added a dedicated dock/preview test (12/12). Verified: clean build, harness 16/16, jsdom picker 35/35, cache 11/11.
+
 ## 1.0.98
 - **Renamed the `src/shared` folder to `src/language`** (all source imports + docs updated), and added a **README guide for adding your own language** (`src/language/README.md`): copy a locale, translate the values, register `LanguageCode` + `LOCALES`/`LANGUAGES`, build.
 - Verified: clean build, harness 16/16, jsdom picker 35/35, cache 11/11.
