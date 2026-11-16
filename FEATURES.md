@@ -6,7 +6,7 @@
 3. `processMessage(el)`:
    - Đọc tên tác giả + nội dung (`#author-name`, `#message`).
    - Nếu text bắt đầu bằng prefix `!` → là tin lệnh; gắn tag `data-ytccc-command` cho Alt+click (kể cả khi cleaner tắt).
-   - **Hai tay config**: `enabled` (**Ẩn lệnh** / Command hider — công tắc gốc) và `commandDelete` (**Dọn lệnh** / Command cleanup — tay xoá, chỉ có tác dụng khi hider bật).
+   - **Hai tay config**: `enabled` (**Ẩn lệnh** / Command hider — công tắc gốc) và `commandDelete` (**Dọn lệnh** / Command cleanup — tay xoá, chỉ có tác dụng khi hider bật). Hider tắt → tay xoá bị **ép TẮT trong storage** (popup ghi `commandDelete: false` khi load lẫn khi tắt), bật lại hider thì tay xoá xuất phát từ TẮT.
    - `commandDelete` false → **chỉ ẩn local** (`hideLocally`): không gọi API/menu, không toast, không ghi `deletedLog`; `!poll` vẫn được tạo nếu `modPoll` bật (tạo poll ≠ xoá tin).
    - `commandDelete` true → **xoá không đụng menu 3 chấm**: ưu tiên bấm nút thùng rác native (`data.inlineActionButtons` server gửi cho mod), không có thì gọi `deleteViaApi` (POST youtubei moderate, SAPISIDHASH) bằng params đã scrape (`waitForParams`, tối đa 2500ms) → luôn ẩn local; thành công → toast "Đã dọn: ..." + ghi `deletedLog`; thiếu cả hai đường → ẩn im lặng.
 4. Toggle `enabled` tắt → `revealHiddenMessages()` khôi phục mọi tin đã ẩn (dọn lệnh tắt hẳn thì không ẩn gì mới).

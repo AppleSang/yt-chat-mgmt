@@ -83,6 +83,27 @@ const runTypecheck = () => {
   if (r.status !== 0) process.exit(r.status || 1);
 };
 
+// Version bump lives inside the build now: patch +1 on manifest.json before
+// bundling, so dist always carries the fresh number. Watch rebuilds do NOT
+// bump - only a full `node build.mjs` run does.
+const bumpVersion = () => {
+  const manifestPath = path.join(root, "public", "manifest.json");
+  const text = fs.readFileSync(manifestPath, "utf8");
+  const m = text.match(/"version"\s*:\s*"(\d+)\.(\d+)\.(\d+)"/);
+  if (!m) {
+    console.error("error: version not found in manifest.json");
+    process.exit(1);
+  }
+  const next = `${m[1]}.${m[2]}.${Number(m[3]) + 1}`;
+  fs.writeFileSync(
+    manifestPath,
+    text.replace(/"version"\s*:\s*"[\d.]+"/, `"version": "${next}"`),
+    "utf8"
+  );
+  console.log(`Version bumped: ${m[1]}.${m[2]}.${m[3]} -> ${next}`);
+};
+
+bumpVersion();
 runTypecheck();
 buildAll();
 

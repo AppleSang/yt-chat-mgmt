@@ -2,6 +2,11 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.112
+- **Command cleanup is forced OFF when the hider is off**: not just hiding the toggle — the popup writes `commandDelete: false` into storage both on load (repairs a stale state) and when the hider switch is turned off. Re-enabling the hider always starts from cleanup OFF; the delete arm must be switched back on deliberately.
+- **`build.mjs` bumps the version itself**: running `node build.mjs` now patches `manifest.json` up before bundling (watch rebuilds do NOT bump). No separate `bump-version.ps1` step anymore (the ps1 file is kept as a fallback).
+- Verified: build auto-bumped 1.0.111 → 1.0.112; new popup-hider test 10/10 (hider off → pair hidden + checkbox unchecked + storage false / hider on → visible + kept checked / live toggle off → both flags saved / hider back on → cleanup starts OFF); command-hider 13/13; alt 34/34; harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9.
+
 ## 1.0.111
 - **Bye 3-dot menu — fully automatic deletion**: with Command cleanup on, a `!` row is deleted the moment it appears WITHOUT the context-menu simulation anymore (pressing ⋮ → picking "Remove"). Two delete paths remain: (1) actually pressing the native inline trash button when the server sent the mod action set (`data.inlineActionButtons`) — YouTube handles it, (2) the silent `live_chat/moderate` API call with scraped params. Missing both → hidden silently (auto flow) / red flash (Alt+click). Removed `tryMenuDelete`, `REMOVE_LABELS` and the "retry after the menu surfaced the annotation" logic.
 - The two-arm split from 1.0.110 stands: Command cleanup only shows in the popup while Command hider is on — confirmed working.

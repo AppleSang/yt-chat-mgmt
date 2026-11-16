@@ -2,6 +2,11 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.112
+- **Dọn lệnh bị ép TẮT khi Ẩn lệnh tắt**: không chỉ ẩn toggle — popup ghi `commandDelete: false` vào storage cả khi load (phát hiện trạng thái cũ lệch) lẫn khi tắt công tắc Ẩn lệnh. Bật lại Ẩn lệnh → tay xoá luôn xuất phát từ trạng thái TẮT, phải bật tay lên thì xoá mới chạy.
+- **`build.mjs` tự bump version**: chạy `node build.mjs` là tăng patch trong `manifest.json` trước khi bundle (watch rebuild không bump). Không cần chạy `bump-version.ps1` riêng nữa (file ps1 giữ lại làm dự phòng).
+- Kiểm chứng: build tự bump 1.0.111 → 1.0.112; test mới popup-hider 10/10 (hider tắt → cặp toggle ẩn + checkbox bỏ chọn + storage ghi false / hider bật → hiện + giữ checked / tắt live → ghi cả hai flag / bật lại → tay xoá xuất phát TẮT); command-hider 13/13; alt 34/34; harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9.
+
 ## 1.0.111
 - **Bye menu 3 chấm — xoá hoàn toàn tự động**: khi Command cleanup bật, dòng `!` được xoá ngay khi hiện mà KHÔNG còn dùng giả lập menu ngữ cảnh (bấm ⋮ → chọn "Xoá") nữa. Hai đường xoá duy nhất: (1) bấm thật nút thùng rác native khi server đã gửi bộ nút mod (`data.inlineActionButtons`) — YouTube tự xử lý, (2) gọi API `live_chat/moderate` im lặng bằng params đã scrape. Thiếu cả hai → ẩn im lặng (luồng tự động) / chớp viền đỏ (Alt+click). Gỡ bỏ `tryMenuDelete`, `REMOVE_LABELS` và cả logic "mở menu xong thử lại API".
 - Tách hai tay giữ nguyên từ 1.0.110: Command hider (ẩn) bật thì Command cleanup (xoá) mới hiện trong popup — đã có từ bản trước, xác nhận hoạt động.

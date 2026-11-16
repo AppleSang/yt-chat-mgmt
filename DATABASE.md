@@ -5,7 +5,8 @@ Extension không có server — toàn bộ dữ liệu nằm trong `chrome.stora
 ## 1. `chrome.storage.sync` — cài đặt người dùng
 | Key | Kiểu | Mặc định | Ý nghĩa |
 |---|---|---|---|
-| `enabled` | boolean | `true` | Master "Dọn lệnh" (chỉ cleanup; emote/badge/bot vẫn chạy khi false) |
+| `enabled` | boolean | `true` | Master "Ẩn lệnh" (Command hider); tắt → reveal tin đã ẩn + ép tắt tay xoá |
+| `commandDelete` | boolean | `true` | Tay xoá "Dọn lệnh" (bên phải Ẩn lệnh cùng dòng); popup ghi `false` khi Ẩn lệnh tắt |
 | `prefix` | string | `"!"` | Prefix lệnh (không còn UI, giữ tối đa 5 ký tự) |
 | `autoLiveChat` | boolean | `true` | Tự chuyển chế độ Live chat (curtain) |
 | `hideBadges` | boolean | `false` | ẩn huy hiệu |
