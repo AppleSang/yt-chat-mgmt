@@ -4,6 +4,8 @@
 
 export interface ExtensionConfig {
   enabled: boolean;
+  /** Command cleanup arm: when false, "!" messages are only hidden. */
+  commandDelete: boolean;
   prefix: string;
   autoLiveChat: boolean;
   hideBadges: boolean;

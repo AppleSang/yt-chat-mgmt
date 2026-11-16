@@ -2,6 +2,17 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.111
+- **Bye menu 3 chấm — xoá hoàn toàn tự động**: khi Command cleanup bật, dòng `!` được xoá ngay khi hiện mà KHÔNG còn dùng giả lập menu ngữ cảnh (bấm ⋮ → chọn "Xoá") nữa. Hai đường xoá duy nhất: (1) bấm thật nút thùng rác native khi server đã gửi bộ nút mod (`data.inlineActionButtons`) — YouTube tự xử lý, (2) gọi API `live_chat/moderate` im lặng bằng params đã scrape. Thiếu cả hai → ẩn im lặng (luồng tự động) / chớp viền đỏ (Alt+click). Gỡ bỏ `tryMenuDelete`, `REMOVE_LABELS` và cả logic "mở menu xong thử lại API".
+- Tách hai tay giữ nguyên từ 1.0.110: Command hider (ẩn) bật thì Command cleanup (xoá) mới hiện trong popup — đã có từ bản trước, xác nhận hoạt động.
+- Kiểm chứng: build sạch; alt-delete 34/34 (case menu chuyển thành: không xoá + chớp đỏ + dòng nguyên vẹn); command-hider 13/13; harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9; pollcmd ALL PASSED.
+
+## 1.0.110
+- **Tách "Dọn lệnh" thành 2 công tắc cùng dòng trong popup**: **Ẩn lệnh** (Command hider — công tắc gốc, id cũ `enabled`) và **Dọn lệnh** (Command cleanup — tay xoá, nằm bên phải cùng dòng, chỉ hiện khi Ẩn lệnh bật). Key storage mới `commandDelete` (default **true** — bản đã cài giữ nguyên hành vi xoá).
+- **Ẩn lệnh bật + Dọn lệnh tắt = chỉ ẩn**: tin `!` biến mất khỏi khung chat ngay lập tức (không gọi `live_chat/moderate`, không thử menu, không toast "Đã dọn", không ghi `deletedLog`); dòng vẫn được tag `data-ytccc-command` nên Alt+click xoá thủ công vẫn hoạt động; `!poll` vẫn tạo bình chọn nếu modPoll bật (tạo poll ≠ xoá tin). Dọn lệnh bật → đúng luồng xoá cũ (params → API → menu → toast). Ẩn lệnh tắt → khôi phục mọi tin đã ẩn như cũ.
+- i18n key mới `popupCommandHider` (vi: "Ẩn lệnh", en: "Command hider"); popup đồng bộ trạng thái hiện/ẩn của tay xoá theo công tắc gốc ngay khi load và khi đổi.
+- Kiểm chứng: build sạch; test mới command-hider 13/13 (chỉ ẩn không gọi API + không toast / bật tay xoá qua storage change → API + toast / tắt hider → reveal + dòng mới nguyên vẹn / bật lại cả hai → xoá tiếp); harness 24/24; picker 47/47; cache 11/11; banner 12/12; alt 32/32; dock 18/18; badge 9/9.
+
 ## 1.0.109
 - **Giải phẫu đúng cơ chế nút mod của YouTube** (đọc bundle chat của YouTube trong trình duyệt): bộ nút 🗑/⏳/⊘ được stamp từ **`data.inlineActionButtons`** — trường payload mà server CHỈ gửi cho mod trên stream đang live; `computeHasInlineActionButtons(data)` kiểm tra mảng này, stamper ghi nút vào `#inline-action-buttons` qua registry `stampDom["data.inlineActionButtons"]` (chỉ đăng ký khi renderer bật cờ support — đây là chỗ stream test offline bị trống).
 - **Giữ Alt → dòng `!` có bộ nút xoá**: mỗi lần nhấn Alt quét một lượt — giả lập hover (pointerenter/over/move) để thúc stamp native; dòng có payload nhưng chưa stamp → tự đăng ký stamper + replay data; dòng trống payload → **tự dựng nút thùng rác giống native** (icon xoá Material, nút tròn 32px, tiêu đề i18n) gắn vào `#inline-action-buttons`. Bấm vào nút synth hoặc Alt+click dòng đều đi qua một đường xoá duy nhất: params đã scrape → API im lặng → menu ngữ cảnh; thất bại → chớp viền đỏ. Nhả Alt/mất focus là dọn toàn bộ nút synth.

@@ -336,6 +336,25 @@ footer.lang-footer {
   flex-shrink: 0;
 }
 
+/* Command hider + cleanup: two toggles on one row; the wrapper keeps .opt
+   so the shared checkbox styling applies, without the label cursor. */
+.opt-split {
+  justify-content: space-between;
+  cursor: default;
+}
+
+.opt-pair {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.opt-pair:hover {
+  color: var(--ink);
+}
+
 /* ---------- Bot list ---------- */
 .bot-list {
   padding-top: 8px;

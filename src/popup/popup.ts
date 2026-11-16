@@ -13,6 +13,8 @@ const els = {
   main: $("main") as HTMLElement,
   language: $("language") as HTMLSelectElement,
   enabled: $("enabled") as HTMLInputElement,
+  commandDelete: $("commandDelete") as HTMLInputElement,
+  commandDeletePair: $("commandDeletePair") as HTMLElement,
   autoLiveChat: $("autoLiveChat") as HTMLInputElement,
   hideBadges: $("hideBadges") as HTMLInputElement,
   hideAvatars: $("hideAvatars") as HTMLInputElement,
@@ -256,6 +258,7 @@ const loadAll = (): void => {
   chrome.storage.sync.get(
     {
       enabled: true,
+      commandDelete: true,
       autoLiveChat: true,
       hideBadges: false,
       hideAvatars: false,
@@ -269,6 +272,9 @@ const loadAll = (): void => {
     },
     (cfg: Record<string, unknown>) => {
       els.enabled.checked = !!cfg.enabled;
+      els.commandDelete.checked = !!cfg.commandDelete;
+      // The cleanup arm only makes sense while hiding is on.
+      els.commandDeletePair.hidden = !cfg.enabled;
       els.autoLiveChat.checked = !!cfg.autoLiveChat;
       els.hideBadges.checked = !!cfg.hideBadges;
       els.hideAvatars.checked = !!cfg.hideAvatars;
@@ -299,7 +305,14 @@ const save = (key: string, value: unknown): void => {
   chrome.storage.sync.set({ [key]: value });
 };
 
-els.enabled.addEventListener("change", () => save("enabled", els.enabled.checked));
+els.enabled.addEventListener("change", () => {
+  save("enabled", els.enabled.checked);
+  // Show/hide the cleanup arm together with the hider switch.
+  els.commandDeletePair.hidden = !els.enabled.checked;
+});
+els.commandDelete.addEventListener("change", () =>
+  save("commandDelete", els.commandDelete.checked)
+);
 els.autoLiveChat.addEventListener("change", () =>
   save("autoLiveChat", els.autoLiveChat.checked)
 );

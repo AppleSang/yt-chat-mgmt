@@ -11,11 +11,6 @@ const MODERATE_URL =
 const CREATE_POLL_URL =
   "https://www.youtube.com/youtubei/v1/live_chat/create_poll?prettyPrint=false";
 
-const REMOVE_LABELS = [
-  "remove", "delete", "xoá", "xóa", "移除", "削除", "삭제", "删除", "刪除",
-  "eliminar", "supprimer", "remover", "entfernen", "удалить"
-];
-
 const processed = new WeakSet<HTMLElement>();
 
 // YouTube truncates long link labels to "https://.../94833..." and wraps the
@@ -203,40 +198,6 @@ const deleteViaApi = async (
     return res.ok;
   } catch (e) {
     log("moderate API error:", (e as Error)?.message);
-    return false;
-  }
-};
-
-const tryMenuDelete = async (el: HTMLElement): Promise<boolean> => {
-  try {
-    const menuBtn = el.querySelector("#menu button, #menu yt-icon-button");
-    if (!menuBtn) return false;
-    (menuBtn as HTMLElement).click();
-
-    const root = document.querySelector("yt-live-chat-app") || document;
-    const deadline = Date.now() + 1500;
-    while (Date.now() < deadline) {
-      const items = root.querySelectorAll(
-        "tp-yt-paper-item, yt-dropdown-menu .dropdown-content paper-item, .dropdown-content tp-yt-paper-item"
-      );
-      for (const item of items) {
-        if (!(item as HTMLElement).offsetParent && item.getClientRects().length === 0)
-          continue;
-        const label = (item.textContent || "").trim().toLowerCase();
-        if (label && REMOVE_LABELS.includes(label)) {
-          (item as HTMLElement).click();
-          closeAnyMenus();
-          log("deleted via menu click");
-          return true;
-        }
-      }
-      await sleep(100);
-    }
-    closeAnyMenus();
-    return false;
-  } catch (e) {
-    log("menu delete error:", (e as Error)?.message);
-    closeAnyMenus();
     return false;
   }
 };
@@ -494,25 +455,30 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
   log("command detected:", author, ":", text.slice(0, 60));
 
   // "!poll": create the poll first (owner's credentials), then let the
-  // normal flow below clean the command message out of the chat.
+  // mode below deal with the command message itself.
   await handlePollCommand(el, text, author, avatar);
+
+  // Hide-only arm (Command cleanup off): the message vanishes from view,
+  // nothing is deleted, no toast, no deleted-log entry.
+  if (!config.commandDelete) {
+    hideLocally(el);
+    return;
+  }
 
   await logMessage(author, text, role, avatar);
 
+  // Delete without the 3-dot dance: press the native inline trash when the
+  // server stamped it, otherwise the silent moderate API with the scraped
+  // params. No context-menu simulation anywhere.
+  const trash = findInlineTrash(el);
+  if (trash) {
+    trash.click();
+    hideLocally(el);
+    return;
+  }
   const params = await waitForParams(el);
   let ok = false;
-  if (params) {
-    ok = await deleteViaApi(el, params);
-    if (!ok) ok = await tryMenuDelete(el);
-  } else {
-    ok = await tryMenuDelete(el);
-    // Opening the menu may have surfaced the moderate endpoint - retry once,
-    // but only when the message actually has a context menu.
-    if (!ok && el.querySelector("#menu button, #menu yt-icon-button")) {
-      const retry = await waitForParams(el, 1500);
-      if (retry && retry !== params) ok = await deleteViaApi(el, retry);
-    }
-  }
+  if (params) ok = await deleteViaApi(el, params);
   hideLocally(el);
   if (ok) {
     showToast({
@@ -670,17 +636,13 @@ const flashFailedDelete = (el: HTMLElement): void => {
   window.setTimeout(() => el.classList.remove("ytccc-del-fail"), 700);
 };
 
-// The delete chain built on scraped signals: annotated params (silent API),
-// else the context menu, retrying the API once the menu surfaced the
-// annotation. Shared by Alt+click and the synth trash button.
+// The delete chain built on scraped signals: annotated params (silent API)
+// only - the 3-dot menu simulation is retired, the native trash button and
+// the API are the two ways a message goes away. Shared by Alt+click and the
+// synth trash button.
 const deleteViaScraped = async (el: HTMLElement): Promise<boolean> => {
-  const known = el.dataset.ytcccParams || "";
-  let ok = known ? await deleteViaApi(el, known) : false;
-  if (!ok) ok = await tryMenuDelete(el);
-  if (!ok && el.querySelector("#menu button, #menu yt-icon-button")) {
-    const retry = await waitForParams(el, 1500);
-    if (retry && retry !== known) ok = await deleteViaApi(el, retry);
-  }
+  const params = el.dataset.ytcccParams || "";
+  const ok = params ? await deleteViaApi(el, params) : false;
   if (ok) {
     // Instant local cleanup; YouTube's own deleted placeholder replaces the
     // row server-side for everyone else.

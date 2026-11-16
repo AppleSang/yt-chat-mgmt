@@ -5,6 +5,9 @@ import { log } from "./logger";
 
 const DEFAULTS: ExtensionConfig = {
   enabled: true,
+  // Deleting stays the default for existing installs; the popup exposes it
+  // as the "Command cleanup" toggle next to the "Command hider" base.
+  commandDelete: true,
   prefix: "!",
   autoLiveChat: true,
   hideBadges: false,
@@ -62,6 +65,7 @@ export const loadConfig = async (): Promise<void> => {
       : DEFAULT_LANGUAGE;
     config = {
       enabled: !!stored.enabled,
+      commandDelete: !!stored.commandDelete,
       prefix: String(stored.prefix || "!").slice(0, 5),
       autoLiveChat: !!stored.autoLiveChat,
       hideBadges: !!stored.hideBadges,
@@ -92,6 +96,7 @@ export const watchConfig = (): void => {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
     if (changes.enabled) config.enabled = !!changes.enabled.newValue;
+    if (changes.commandDelete) config.commandDelete = !!changes.commandDelete.newValue;
     if (changes.prefix)
       config.prefix = String(changes.prefix.newValue || "!").slice(0, 5);
     if (changes.autoLiveChat) config.autoLiveChat = !!changes.autoLiveChat.newValue;

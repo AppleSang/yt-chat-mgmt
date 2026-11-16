@@ -5,11 +5,11 @@
 2. MutationObserver bắt tin nhắn mới (`MESSAGE_SELECTOR`).
 3. `processMessage(el)`:
    - Đọc tên tác giả + nội dung (`#author-name`, `#message`).
-   - Nếu text bắt đầu bằng prefix `!` → là tin lệnh.
-   - Chờ params xác thực (`waitForParams`, tối đa 2500ms) → gọi `deleteViaApi` (POST youtubei moderate, SAPISIDHASH) → thất bại thì thử menu (`tryMenuDelete`, chỉ khi có nút menu; có retry `waitForParams(1500)`).
-   - **Luôn** ẩn local (`hideLocally`) bất kể API thành công hay không; thất bại thì im lặng.
-   - Thành công → toast "Đã dọn: ..." + ghi `deletedLog` (storage.local, tối đa 200 entry).
-4. Toggle `enabled` tắt → `revealHiddenMessages()` khôi phục mọi tin đã ẩn.
+   - Nếu text bắt đầu bằng prefix `!` → là tin lệnh; gắn tag `data-ytccc-command` cho Alt+click (kể cả khi cleaner tắt).
+   - **Hai tay config**: `enabled` (**Ẩn lệnh** / Command hider — công tắc gốc) và `commandDelete` (**Dọn lệnh** / Command cleanup — tay xoá, chỉ có tác dụng khi hider bật).
+   - `commandDelete` false → **chỉ ẩn local** (`hideLocally`): không gọi API/menu, không toast, không ghi `deletedLog`; `!poll` vẫn được tạo nếu `modPoll` bật (tạo poll ≠ xoá tin).
+   - `commandDelete` true → **xoá không đụng menu 3 chấm**: ưu tiên bấm nút thùng rác native (`data.inlineActionButtons` server gửi cho mod), không có thì gọi `deleteViaApi` (POST youtubei moderate, SAPISIDHASH) bằng params đã scrape (`waitForParams`, tối đa 2500ms) → luôn ẩn local; thành công → toast "Đã dọn: ..." + ghi `deletedLog`; thiếu cả hai đường → ẩn im lặng.
+4. Toggle `enabled` tắt → `revealHiddenMessages()` khôi phục mọi tin đã ẩn (dọn lệnh tắt hẳn thì không ẩn gì mới).
 
 ## F2. Ẩn bot + toast — `commands.ts` + `toast.ts`
 1. Config botList → mảng tên (bỏ @, lowercase).
@@ -71,7 +71,7 @@
 2. **Nguồn nút xoá trên từng dòng `!`** (thứ tự ưu tiên):
    - **Nút native**: YouTube stamp bộ 🗑/⏳/⊘ từ `data.inlineActionButtons` — payload server chỉ gửi mod trên stream live. Có sẵn hoặc stamp được (tự đăng ký `stampDom["data.inlineActionButtons"]` + replay `data`) → bấm thẳng nút thùng rác native = xoá qua đúng pipeline YouTube.
    - **Nút tự dựng (synth)**: dòng không có payload → tạo `yt-icon-button.ytccc-inline-trash` (icon xoá Material, tròn 32px, tooltip i18n `altTrashTitle`) gắn vào `#inline-action-buttons`; CSS `:has(#inline-action-buttons > *)` force hiện container khi giữ Alt.
-   - Chuỗi xoá dùng chung `deleteViaScraped`: params đã scrape → API `live_chat/moderate` im lặng → menu ngữ cảnh → retry API một lần; ẩn local khi thành công.
-3. **Alt+click dòng `!`** hoặc bấm nút (native/synth) → đúng MỘT đường xoá: native press ưu tiên (synth bị loại khỏi phép dò để không bấm vòng), không có native thì `deleteViaScraped`; thất bại → chớp viền đỏ 700ms, không đổi trạng thái.
+   - Chuỗi xoá dùng chung `deleteViaScraped`: **chỉ còn params đã scrape → API im lặng** (menu 3 chấm đã bị loại bỏ hoàn toàn theo yêu cầu thiết kế); ẩn local khi thành công.
+3. **Alt+click dòng `!`** hoặc bấm nút (native/synth) → đúng MỘT đường xoá: native press ưu tiên (synth bị loại khỏi phép dò để không bấm vòng), không có native thì `deleteViaScraped` (params → API, không menu); thất bại → chớp viền đỏ 700ms, không đổi trạng thái.
 4. **Vệ sinh**: nhả Alt / mất focus → xoá toàn bộ nút synth; bản copy trong dải ghim (`yt-live-chat-banner-manager`) được bảo vệ hoàn toàn; bấm ngoài dòng `!` hoặc không giữ Alt → hành vi native nguyên vẹn.
 5. Test: `alt-delete-test.cjs` (32 case — native/synth/force-stamp/chain/flash/pinned/no-Alt).

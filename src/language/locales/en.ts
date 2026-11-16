@@ -5,6 +5,7 @@ export const en = {
   // Popup: header / cards
   popupSettingsCard: "Settings",
   popupCleanupOption: "Command cleanup",
+  popupCommandHider: "Command hider",
   popupAutoLiveChat: "Auto-enable “Live chat” mode",
   popupHideBadges: "Hide badges (member / mod)",
   popupHideAvatars: "Hide chatter avatars",

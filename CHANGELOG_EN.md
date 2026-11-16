@@ -2,6 +2,17 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.111
+- **Bye 3-dot menu — fully automatic deletion**: with Command cleanup on, a `!` row is deleted the moment it appears WITHOUT the context-menu simulation anymore (pressing ⋮ → picking "Remove"). Two delete paths remain: (1) actually pressing the native inline trash button when the server sent the mod action set (`data.inlineActionButtons`) — YouTube handles it, (2) the silent `live_chat/moderate` API call with scraped params. Missing both → hidden silently (auto flow) / red flash (Alt+click). Removed `tryMenuDelete`, `REMOVE_LABELS` and the "retry after the menu surfaced the annotation" logic.
+- The two-arm split from 1.0.110 stands: Command cleanup only shows in the popup while Command hider is on — confirmed working.
+- Verified: clean build; alt-delete 34/34 (the menu case became: no deletion + red flash + row untouched); command-hider 13/13; harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9; pollcmd ALL PASSED.
+
+## 1.0.110
+- **Split "Command cleanup" into two toggles on one popup row**: **Command hider** (base switch, old `enabled` id) and **Command cleanup** (the delete arm, sitting on the right of the same row, only visible while the hider is on). New storage key `commandDelete` (default **true** — existing installs keep the delete behavior).
+- **Hider on + cleanup off = hide only**: `!` messages vanish from the chat instantly (no `live_chat/moderate` call, no menu attempts, no "Cleaned" toast, no `deletedLog` entry); rows stay tagged `data-ytccc-command` so manual Alt+click delete keeps working; `!poll` still creates the poll when modPoll is on (poll creation ≠ message deletion). Cleanup on → the exact old delete flow (params → API → menu → toast). Hider off → all hidden messages revealed as before.
+- New i18n key `popupCommandHider` (vi: "Ẩn lệnh", en: "Command hider"); the popup syncs the delete arm's visibility with the base switch on load and on change.
+- Verified: clean build; new command-hider test 13/13 (hide-only with zero API calls + no toast / enabling the delete arm via storage change → API + toast / hider off → reveal + new rows untouched / both arms on → deletes again); harness 24/24; picker 47/47; cache 11/11; banner 12/12; alt 32/32; dock 18/18; badge 9/9.
+
 ## 1.0.109
 - **Reverse-engineered YouTube's mod-button mechanism** (read YouTube's chat bundle in-browser): the trash/timeout/ban set is stamped from **`data.inlineActionButtons`** — a payload field the server only sends to moderators on live chats; `computeHasInlineActionButtons(data)` checks that array and the stamper writes buttons into `#inline-action-buttons` via the `stampDom["data.inlineActionButtons"]` registry (registered only when the renderer's support flag is on — why the offline test stream stayed empty).
 - **Alt hold gives `!` rows a delete button set**: each Alt press sweeps once — synthetic hover (pointerenter/over/move) nudges native stamping; rows carrying the payload but unstamped get the stamper registered + data replayed; rows with no payload get a **lookalike native trash button** (Material delete glyph, 32px round, i18n title) grown into `#inline-action-buttons`. Clicking the synth button or Alt+clicking the row both take a single delete path: scraped params → silent API → context menu; failure flashes the row. Releasing Alt / losing focus cleans up every synth button.

@@ -7,6 +7,7 @@ export const vi: Dict = {
   // Popup: header / cards
   popupSettingsCard: "Cài đặt",
   popupCleanupOption: "Dọn lệnh",
+  popupCommandHider: "Ẩn lệnh",
   popupAutoLiveChat: "Tự động “Trò chuyện trực tiếp”",
   popupHideBadges: "Ẩn badge (hội viên / mod)",
   popupHideAvatars: "Ẩn avatar người chat",

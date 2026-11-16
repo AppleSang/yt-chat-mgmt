@@ -25,10 +25,18 @@
           <a id="updateBadge" class="update-badge" target="_blank" rel="noopener noreferrer" hidden></a>
         </div>
 
-        <label class="opt">
-          <input type="checkbox" id="enabled" />
-          <span data-i18n="popupCleanupOption">Command cleanup</span>
-        </label>
+        <!-- Command hider + cleanup share one row: hiding is the base
+             switch, the delete arm appears beside it while hiding is on. -->
+        <div class="opt opt-split">
+          <label class="opt-pair">
+            <input type="checkbox" id="enabled" />
+            <span data-i18n="popupCommandHider">Command hider</span>
+          </label>
+          <label class="opt-pair" id="commandDeletePair" hidden>
+            <input type="checkbox" id="commandDelete" />
+            <span data-i18n="popupCleanupOption">Command cleanup</span>
+          </label>
+        </div>
 
         <label class="opt">
           <input type="checkbox" id="autoLiveChat" />
