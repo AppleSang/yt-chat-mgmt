@@ -21,6 +21,9 @@ const els = {
   botToastVal: $("botToastVal") as HTMLElement,
   toastPosTop: $("toastPosTop") as HTMLButtonElement,
   toastPosBottom: $("toastPosBottom") as HTMLButtonElement,
+  bannerPosTop: $("bannerPosTop") as HTMLButtonElement,
+  bannerPosBottom: $("bannerPosBottom") as HTMLButtonElement,
+  updateBadge: $("updateBadge") as HTMLAnchorElement,
   sevenTvSearch: $("sevenTvSearch") as HTMLInputElement,
   sevenTvResults: $("sevenTvResults") as HTMLElement,
   sevenTvAdded: $("sevenTvAdded") as HTMLElement,
@@ -156,7 +159,74 @@ const initLanguageSelect = (): void => {
     chrome.storage.sync.set({ language: lang });
     if (isLanguageCode(lang)) setLanguage(lang);
     applyI18n();
+    renderUpdateBadge();
   });
+};
+
+// ---------- update badge ----------
+// Settings-card head shows the release state at a glance: same version ->
+// nothing, older -> pulsing yellow link to the releases page, newer (local
+// dev build) -> static purple tag. GitHub's REST API answers with CORS `*`,
+// so a plain popup fetch needs no extra host permission.
+const RELEASES_URL = "https://github.com/AppleSang/yt-chat-mgmt/releases";
+
+let updateState: "new" | "dev" | null = null;
+let updateVersion = "";
+
+const parseVersion = (v: string): number[] =>
+  v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
+
+const compareVersions = (a: number[], b: number[]): number => {
+  const len = Math.max(a.length, b.length);
+  for (let i = 0; i < len; i++) {
+    const d = (a[i] || 0) - (b[i] || 0);
+    if (d) return d > 0 ? 1 : -1;
+  }
+  return 0;
+};
+
+const renderUpdateBadge = (): void => {
+  const badge = els.updateBadge;
+  if (!updateState) {
+    badge.hidden = true;
+    return;
+  }
+  if (updateState === "new") {
+    badge.textContent = `${t("popupNewUpdate")} ${updateVersion}`;
+    badge.href = RELEASES_URL;
+    badge.classList.add("update-new");
+    badge.classList.remove("update-dev");
+  } else {
+    badge.textContent = t("popupDevBuild");
+    badge.removeAttribute("href");
+    badge.classList.add("update-dev");
+    badge.classList.remove("update-new");
+  }
+  badge.hidden = false;
+};
+
+const checkUpdate = async (): Promise<void> => {
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/AppleSang/yt-chat-mgmt/releases/latest",
+      { headers: { Accept: "application/vnd.github+json" } }
+    );
+    if (!res.ok) return;
+    const data = (await res.json()) as { tag_name?: string };
+    const tag = String(data.tag_name || "");
+    // A non semver-ish tag cannot be compared reliably: stay silent.
+    if (!/^v?\d+(\.\d+)*$/.test(tag)) return;
+    const cmp = compareVersions(
+      parseVersion(chrome.runtime.getManifest().version || ""),
+      parseVersion(tag)
+    );
+    if (cmp === 0) return;
+    updateState = cmp < 0 ? "new" : "dev";
+    updateVersion = tag.replace(/^v/, "");
+    renderUpdateBadge();
+  } catch (e) {
+    /* offline or rate-limited: the badge simply stays hidden */
+  }
 };
 
 // Footer "report an issue" button: opens the repo's new-issue page in a new
@@ -192,6 +262,7 @@ const loadAll = (): void => {
       botList: "@nightbot, @streamelements, @streamlabs",
       botToastSeconds: 10,
       toastPosition: "bottom",
+      bannerPosition: "top",
       emoteSetIds: "",
       emoteUsers: [],
       emoteHq: false
@@ -208,6 +279,7 @@ const loadAll = (): void => {
       els.botToastSeconds.value = String(safe);
       els.botToastVal.textContent = safe === 0 ? t("popupOff") : `${safe}s`;
       setToastPos(cfg.toastPosition === "top" ? "top" : "bottom");
+      setBannerPos(cfg.bannerPosition === "bottom" ? "bottom" : "top");
       els.sevenTvSearch.value = "";
       els.sevenTvResults.dataset.ids = String(cfg.emoteSetIds || "");
       addedUsers = Array.isArray(cfg.emoteUsers) ? (cfg.emoteUsers as AddedUser[]) : [];
@@ -265,6 +337,22 @@ els.toastPosTop.addEventListener("click", () => {
 els.toastPosBottom.addEventListener("click", () => {
   setToastPos("bottom");
   save("toastPosition", "bottom");
+});
+
+// Same radio behaviour for the pinned-message tiles (exactly one pressed);
+// the content script reacts to the storage change instantly.
+type BannerPos = "top" | "bottom";
+const setBannerPos = (pos: BannerPos): void => {
+  els.bannerPosTop.setAttribute("aria-pressed", pos === "top" ? "true" : "false");
+  els.bannerPosBottom.setAttribute("aria-pressed", pos === "bottom" ? "true" : "false");
+};
+els.bannerPosTop.addEventListener("click", () => {
+  setBannerPos("top");
+  save("bannerPosition", "top");
+});
+els.bannerPosBottom.addEventListener("click", () => {
+  setBannerPos("bottom");
+  save("bannerPosition", "bottom");
 });
 
 els.clearLog.addEventListener("click", () => {
@@ -475,7 +563,11 @@ els.sevenTvSearch.addEventListener("input", () => {
 
 initLanguageSelect();
 initReportIssue();
-loadLanguage(() => loadAll());
+// Update badge runs after the language is applied so its text is localized.
+loadLanguage(() => {
+  loadAll();
+  void checkUpdate();
+});
 
 // --- stats card -------------------------------------------------------------
 // Polled every 3s while the popup is open: cache footprint straight from

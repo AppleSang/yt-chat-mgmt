@@ -20,6 +20,9 @@
         <div class="card-head">
           <img src="../icons/icon128.png" width="16" height="16" alt="" />
           <span data-i18n="popupSettingsCard">Settings</span>
+          <!-- Update badge: hidden until the release check resolves (equal
+               version stays hidden; older -> pulsing link; newer -> dev tag). -->
+          <a id="updateBadge" class="update-badge" target="_blank" rel="noopener noreferrer" hidden></a>
         </div>
 
         <label class="opt">
@@ -86,6 +89,41 @@
                 <rect x="18" y="31.9" width="26" height="2.2" rx="1.1" style="fill:var(--on-primary);opacity:0.75"/>
               </svg>
               <span data-i18n="popupToastBottom">Bottom</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pinned-message placement: the same radio-tile pair as toasts; the
+             full-width strip stands for YouTube's pinned banner manager and
+             the plain rows for the chat message list. -->
+        <div class="bot-list">
+          <span class="lbl" data-i18n="popupBannerPosition">Pinned message position</span>
+          <div class="toast-pos" role="radiogroup">
+            <button type="button" class="toast-pos-opt" id="bannerPosTop" aria-pressed="false">
+              <svg viewBox="0 0 64 44" width="64" height="44" aria-hidden="true" focusable="false">
+                <rect x="1" y="1" width="62" height="42" rx="7" style="fill:var(--surface-2);stroke:var(--hairline-strong)"/>
+                <rect x="7" y="6" width="50" height="10" rx="5" style="fill:var(--primary)"/>
+                <circle cx="13" cy="11" r="2.6" style="fill:var(--on-primary)"/>
+                <rect x="18" y="9.9" width="30" height="2.2" rx="1.1" style="fill:var(--on-primary);opacity:0.75"/>
+                <circle cx="13" cy="24" r="2.6" style="fill:var(--ink-tertiary)"/>
+                <rect x="18" y="22.9" width="26" height="2.2" rx="1.1" style="fill:var(--ink-tertiary);opacity:0.7"/>
+                <circle cx="13" cy="32" r="2.6" style="fill:var(--ink-tertiary)"/>
+                <rect x="18" y="30.9" width="16" height="2.2" rx="1.1" style="fill:var(--ink-tertiary);opacity:0.7"/>
+              </svg>
+              <span data-i18n="popupBannerTop">Top</span>
+            </button>
+            <button type="button" class="toast-pos-opt" id="bannerPosBottom" aria-pressed="false">
+              <svg viewBox="0 0 64 44" width="64" height="44" aria-hidden="true" focusable="false">
+                <rect x="1" y="1" width="62" height="42" rx="7" style="fill:var(--surface-2);stroke:var(--hairline-strong)"/>
+                <circle cx="13" cy="13" r="2.6" style="fill:var(--ink-tertiary)"/>
+                <rect x="18" y="11.9" width="26" height="2.2" rx="1.1" style="fill:var(--ink-tertiary);opacity:0.7"/>
+                <circle cx="13" cy="21" r="2.6" style="fill:var(--ink-tertiary)"/>
+                <rect x="18" y="19.9" width="22" height="2.2" rx="1.1" style="fill:var(--ink-tertiary);opacity:0.7"/>
+                <rect x="7" y="28" width="50" height="10" rx="5" style="fill:var(--primary)"/>
+                <circle cx="13" cy="33" r="2.6" style="fill:var(--on-primary)"/>
+                <rect x="18" y="31.9" width="30" height="2.2" rx="1.1" style="fill:var(--on-primary);opacity:0.75"/>
+              </svg>
+              <span data-i18n="popupBannerBottom">Bottom</span>
             </button>
           </div>
         </div>

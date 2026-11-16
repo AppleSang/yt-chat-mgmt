@@ -13,6 +13,7 @@ const DEFAULTS: ExtensionConfig = {
   botList: "@nightbot, @streamelements, @streamlabs",
   botToastSeconds: 10,
   toastPosition: "bottom",
+  bannerPosition: "top",
   emoteHq: false,
   language: DEFAULT_LANGUAGE
 };
@@ -26,6 +27,15 @@ const toastPositionListeners: ToastPositionListener[] = [];
 
 export const onToastPositionChange = (fn: ToastPositionListener): void => {
   toastPositionListeners.push(fn);
+};
+
+// Same single-listener pattern as the toast position: the banner placement
+// module registers once and reacts to popup toggles.
+type BannerPositionListener = (pos: ExtensionConfig["bannerPosition"]) => void;
+const bannerPositionListeners: BannerPositionListener[] = [];
+
+export const onBannerPositionChange = (fn: BannerPositionListener): void => {
+  bannerPositionListeners.push(fn);
 };
 
 let botNames: string[] = [];
@@ -65,6 +75,7 @@ export const loadConfig = async (): Promise<void> => {
           : 10;
       })(),
       toastPosition: stored.toastPosition === "top" ? "top" : "bottom",
+      bannerPosition: stored.bannerPosition === "bottom" ? "bottom" : "top",
       emoteHq: !!stored.emoteHq,
       language: lang
     };
@@ -102,6 +113,11 @@ export const watchConfig = (): void => {
       config.toastPosition =
         changes.toastPosition.newValue === "top" ? "top" : "bottom";
       for (const fn of toastPositionListeners) fn(config.toastPosition);
+    }
+    if (changes.bannerPosition) {
+      config.bannerPosition =
+        changes.bannerPosition.newValue === "bottom" ? "bottom" : "top";
+      for (const fn of bannerPositionListeners) fn(config.bannerPosition);
     }
     if (changes.language) setLanguage(changes.language.newValue);
     log("config updated:", JSON.stringify(config));

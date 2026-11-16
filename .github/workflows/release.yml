@@ -43,9 +43,9 @@ jobs:
           # inline-render SVG in release notes; the file ships as an asset
           # of this same release.
           cat > release_body.md <<EOF
-          🇻🇳 **Hướng dẫn cài đặt: [tại đây](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.vi.md#c%C3%A0i-%C4%91%E1%BA%B7t)**
+          🇻🇳 **Hướng dẫn cài đặt: [tại đây](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.vi.md#c%C3%A0i-%C4%91%E1%BA%B7t)** 📥
 
-          🇬🇧 **Install guide: [here](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.md#install)**
+          🇬🇧 **Install guide: [here](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.md#install)** 📥
 
           ---
           EOF

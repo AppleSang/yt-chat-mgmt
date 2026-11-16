@@ -13,6 +13,8 @@ export interface ExtensionConfig {
   botToastSeconds: number;
   /** Where the toast stack lives inside YouTube's #chat column. */
   toastPosition: "top" | "bottom";
+  /** Where the pinned-message banner sits relative to the chat list. */
+  bannerPosition: "top" | "bottom";
   emoteHq: boolean;
   language: LanguageCode;
 }

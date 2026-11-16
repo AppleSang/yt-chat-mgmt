@@ -449,6 +449,12 @@ const handlePollCommand = async (
 
 export const processMessage = async (el: HTMLElement): Promise<void> => {
   if (processed.has(el)) return;
+  // Pinned copies (inside yt-live-chat-banner-manager) render the SAME
+  // message renderer inside the pinned strip. Hiding a bot there would
+  // blank a message the channel owner explicitly pinned, so moderation
+  // (bot hiding + command cleanup + Alt delete) skips banner copies
+  // entirely — the visual passes (badges/emotes) still run on them.
+  if (el.closest("yt-live-chat-banner-manager")) return;
   const text = getMessageText(el);
   const author =
     ((qsOne(el, "#author-name") as HTMLElement | null)?.textContent?.trim()) ||
@@ -473,6 +479,10 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
     return;
   }
 
+  // Tag command rows for the Alt quick-delete hover styling. Set BEFORE the
+  // enabled check so manually deleting "!" spam with Alt+click works while
+  // the auto cleaner is switched off.
+  if (isCommand(text)) el.dataset.ytcccCommand = "1";
   if (!config.enabled) return;
   if (!isCommand(text)) return;
   // Always attempt to delete (own/mod messages included). If deletion is
@@ -514,6 +524,97 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
   } else {
     log("could not delete - hidden silently:", author);
   }
+};
+
+// --- Alt+click quick delete --------------------------------------------------
+// Holding Alt turns chat rows into one-click delete targets: the same silent
+// moderate endpoint (and context-menu fallback) the "!"-cleanup uses, so all
+// auth/params paths are shared. While Alt is down a document class paints a
+// red outline on hovered rows (crosshair cursor); a failed delete flashes
+// the row. Non-moderators simply fail silently (flash, no state change).
+let altDown = false;
+
+const setAltHighlight = (on: boolean): void => {
+  altDown = on;
+  // documentElement class keeps the CSS descendant prefix valid for every
+  // MESSAGE_SELECTOR tag.
+  document.documentElement.classList.toggle("ytccc-alt-del-on", on);
+};
+
+const flashFailedDelete = (el: HTMLElement): void => {
+  el.classList.add("ytccc-del-fail");
+  window.setTimeout(() => el.classList.remove("ytccc-del-fail"), 700);
+};
+
+const altDeleteMessage = async (el: HTMLElement): Promise<void> => {
+  // Same precedence as the command cleanup: use the annotated params when
+  // they exist (silent API), else the context menu, retrying the API once
+  // the menu surfaced the annotation.
+  const known = el.dataset.ytcccParams || "";
+  let ok = known ? await deleteViaApi(el, known) : false;
+  if (!ok) ok = await tryMenuDelete(el);
+  if (!ok && el.querySelector("#menu button, #menu yt-icon-button")) {
+    const retry = await waitForParams(el, 1500);
+    if (retry && retry !== known) ok = await deleteViaApi(el, retry);
+  }
+  if (ok) {
+    // Instant local cleanup; YouTube's own deleted placeholder replaces the
+    // row server-side for everyone else.
+    hideLocally(el);
+  } else {
+    flashFailedDelete(el);
+    log("alt delete failed:", getMessageText(el).slice(0, 40));
+  }
+};
+
+// Alt+click is the manual arm of the command cleaner: only rows starting
+// with the configured prefix are targets, replacing the 3-dot-menu dance
+// on "!" spam. MESSAGE_SELECTOR joined with commas needs the document
+// class prefix on EVERY selector (`.on a, b` would match bare `b` too).
+const altHoverCss = MESSAGE_SELECTOR.split(",")
+  .map((s) => `.ytccc-alt-del-on ${s.trim()}[data-ytccc-command]:hover`)
+  .join(", ");
+
+export const initAltDelete = (): void => {
+  if (!document.getElementById("ytccc-alt-delete-style")) {
+    const style = document.createElement("style");
+    style.id = "ytccc-alt-delete-style";
+    style.textContent =
+      `${altHoverCss}{outline:1px solid rgba(244,67,54,0.9);outline-offset:-1px;cursor:crosshair;}` +
+      `.ytccc-del-fail{outline:1px solid rgba(244,67,54,0.9)!important;outline-offset:-1px;}`;
+    (document.head || document.documentElement).appendChild(style);
+  }
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Alt" && !altDown) setAltHighlight(true);
+  }, true);
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "Alt") setAltHighlight(false);
+  }, true);
+  // Focus switches while holding Alt would otherwise leave the mode stuck.
+  window.addEventListener("blur", () => {
+    if (altDown) setAltHighlight(false);
+  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!altDown) return;
+      const target = e.target as HTMLElement | null;
+      if (!target || typeof target.closest !== "function") return;
+      const msg = target.closest<HTMLElement>(MESSAGE_SELECTOR);
+      if (!msg) return;
+      // Pinned copies are protected by design (same rule as bot hiding).
+      if (msg.closest("yt-live-chat-banner-manager")) return;
+      // Command-cleaner scope: only "!" messages are Alt targets; other
+      // rows keep their native click behavior (profile links, menus...).
+      if (!isCommand(getMessageText(msg))) return;
+      // Swallow the click so YouTube's own row handlers (author links,
+      // menus) don't also fire on an Alt+click.
+      e.preventDefault();
+      e.stopPropagation();
+      void altDeleteMessage(msg);
+    },
+    true
+  );
 };
 
 // Re-export so other modules (mutation observer) can reach the selector.

@@ -3,7 +3,8 @@ import {
   MESSAGE_SELECTOR,
   processMessage,
   revealHiddenMessages,
-  initPollParams
+  initPollParams,
+  initAltDelete
 } from "./commands";
 import { applyBadges } from "./dom";
 import {
@@ -16,6 +17,7 @@ import {
 import { injectIntoCatalog, initSuggest } from "./suggest";
 import { ensureSwitchLoop, getSwitchState, setSwitchState } from "./curtain";
 import { initToasts } from "./toast";
+import { initBanners, scheduleBannerApply } from "./banner";
 import { log } from "./logger";
 
 // Debounced per-card poll processing. Batches that contain our own
@@ -45,6 +47,20 @@ const handleAddedNode = (node: Node): void => {
   }
   if (el.querySelector && el.querySelector(PICKER_TAGS)) {
     injectIntoCatalog();
+  }
+  // Banner re-created or re-parented by YouTube (or by our own move — the
+  // canonical check inside keeps that inert).
+  if (
+    el.matches &&
+    el.matches("yt-live-chat-banner-manager, yt-live-chat-banner-renderer")
+  ) {
+    scheduleBannerApply();
+  }
+  if (
+    el.querySelector &&
+    el.querySelector("yt-live-chat-banner-manager, yt-live-chat-banner-renderer")
+  ) {
+    scheduleBannerApply();
   }
   if (el.matches && el.matches(MESSAGE_SELECTOR)) {
     applyBadges(el);
@@ -95,6 +111,8 @@ const boot = (): boolean => {
       applyPollEmotes(el);
     });
     injectIntoCatalog();
+    // Belt-and-braces banner re-check every sweep; a no-op when in place.
+    scheduleBannerApply();
   };
   setInterval(emoteSweep, 3000);
 
@@ -146,8 +164,10 @@ const main = async (): Promise<void> => {
   await loadConfig();
   watchConfig();
   initToasts();
+  initBanners();
   initSuggest();
   initPollParams();
+  initAltDelete();
 
   // Chat page: live_chat iframe on www.youtube.com, or embedded chat in
   // YouTube Studio (studio.youtube.com serves the same chat components).

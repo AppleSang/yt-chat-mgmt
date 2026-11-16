@@ -3,7 +3,7 @@
   "name": "yt-chat-mgmt",
   "short_name": "yt-chat-mgmt",
   "description": "Clear commands, hide bot messages, enhance live chat YouTube and support 7TV!",
-  "version": "1.0.102",
+  "version": "1.0.107",
   "permissions": ["storage"],
   "host_permissions": ["https://*.youtube.com/*", "https://7tv.io/*"],
   "background": {

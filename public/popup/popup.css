@@ -64,6 +64,28 @@ body {
   color: var(--ink-subtle);
 }
 
+/* ---------- Update badge (settings card head) ---------- */
+.update-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+/* Older than the latest release: pulsing yellow link to the releases page. */
+.update-badge.update-new {
+  color: #f9ab00;
+  cursor: pointer;
+  animation: update-pulse 1.2s ease-in-out infinite;
+}
+/* Newer than the latest release (local dev build): static purple tag. */
+.update-badge.update-dev {
+  color: #c58af9;
+}
+@keyframes update-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 /* ---------- 7TV user search + sets ---------- */
 .stv-results {
   display: flex;

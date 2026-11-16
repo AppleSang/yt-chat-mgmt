@@ -258,6 +258,17 @@ let stvPanelOpen = false;
 let stvSearch = "";
 const rowBound = new WeakSet<Element>();
 const searchBound = new WeakSet<HTMLInputElement>();
+const pickerWatched = new WeakSet<Element>();
+const scrollBound = new WeakSet<Element>();
+// Strong refs to our injected nodes: when YouTube's periodic re-render drops
+// them, they are repaired by RE-ATTACHING the same elements — a fresh
+// rebuild would reload every grid image and read as a visible flicker.
+let stvPanelEl: HTMLElement | null = null;
+let stvCatEl: HTMLElement | null = null;
+let lastPickerEl: Element | null = null;
+// Set while the native scroller sits at its end, so the 7TV jump fires once
+// per bottom-arrival instead of on every scroll tick down there.
+let stvWasAtEnd = false;
 
 const loadStvUsers = async (): Promise<void> => {
   try {
@@ -375,7 +386,7 @@ const makeStvAvatarButton = (u: StvUserLite, size = 36): HTMLElement => {
 // Polymer-stamped button — outside the dom-repeat's managed range, which is
 // what made the 1.0.79 mid-row insertion corrupt rendering. Buttons are only
 // re-pinned when actually missing, so steady-state injects mutate nothing.
-const ensureStvButtons = (row: Element): void => {
+const ensureStvButtons = (row: Element, picker: Element): void => {
   ensureStvStyle();
   const parent = row.parentElement;
   if (!parent) return;
@@ -399,12 +410,19 @@ const ensureStvButtons = (row: Element): void => {
     el.dataset.ytcccSize = String(size);
   };
   let cat = row.querySelector<HTMLElement>(":scope > .ytccc-stv-cat");
+  if (!cat && stvCatEl && !stvCatEl.isConnected) {
+    // Same-picker re-render dropped our button: re-attach the original
+    // element (listeners and SVG come back intact, nothing reloads).
+    cat = stvCatEl;
+    row.appendChild(cat);
+  }
   if (!cat) {
     cat = makeStvCatButton(size);
     row.appendChild(cat);
   } else {
     applySize(cat);
   }
+  stvCatEl = cat;
   // The signature check rebuilds the avatar tail only when the user list
   // changed — or when a re-render dropped some of them.
   const sig = stvUsers.map((u) => u.id).join(",");
@@ -421,18 +439,32 @@ const ensureStvButtons = (row: Element): void => {
   // The emote panel is a sibling of the row (never a child of it), with its
   // own scroll container so wheel scrolling never depends on picker internals.
   let panel = parent.querySelector<HTMLElement>(":scope > .ytccc-stv-panel");
+  if (!panel && picker === lastPickerEl && stvPanelEl && !stvPanelEl.isConnected) {
+    // YouTube's re-render dropped our panel: re-attach the SAME element so
+    // the grid and every loaded image survive intact. A fresh rebuild would
+    // reload all of them and read as the whole picker flickering. Reuse is
+    // gated on the SAME picker element — a brand-new picker must never
+    // inherit the previous instance's panel.
+    panel = stvPanelEl;
+    parent.insertBefore(panel, row.nextSibling);
+  }
   if (!panel) {
-    // A missing panel means a fresh picker instance (closed/re-created, e.g.
-    // after sending). Start in the stock state so the panel never auto-reopens
-    // and its grid never visibly "reloads" right after a send.
-    stvPanelOpen = false;
-    stvSearch = "";
+    // A brand-new picker element (closed/re-created, e.g. after sending)
+    // starts in the stock state so the panel never auto-reopens and its
+    // grid never visibly "reloads" right after a send. The same picker
+    // losing our panel to a re-render is NOT fresh: keep open/search state.
+    if (picker !== lastPickerEl) {
+      stvPanelOpen = false;
+      stvSearch = "";
+    }
     panel = document.createElement("div");
     panel.className = "ytccc-stv-panel";
     panel.style.cssText =
       "display:none;max-height:280px;overflow-y:auto;border-top:1px solid rgba(255,255,255,0.08);padding:8px 8px 4px;";
     parent.insertBefore(panel, row.nextSibling);
   }
+  stvPanelEl = panel;
+  lastPickerEl = picker;
 };
 
 const stvPanelEmotes = (): Emote[] => {
@@ -577,10 +609,70 @@ const onRowCaptureClick = (e: Event): void => {
   }
 };
 
+// YouTube re-renders the picker contents periodically on some streams: our
+// injected nodes disappear and the 3s sweep only re-adds them later — the
+// panel vanishing and reappearing reads as the whole picker flickering. A
+// scoped childList observer re-attaches our nodes in the same tick the
+// platform drops them, so nothing visibly blinks. Loop safety: the callback
+// gates on our nodes being genuinely missing, and every re-attach path
+// (ensureStvButtons / renderStvPanel) mutates nothing when they are present.
+const ensurePickerWatch = (picker: Element): void => {
+  if (pickerWatched.has(picker)) return;
+  pickerWatched.add(picker);
+  const obs = new MutationObserver(() => {
+    if (!picker.isConnected) {
+      obs.disconnect();
+      pickerWatched.delete(picker);
+      return;
+    }
+    const hasCat = !!picker.querySelector(".ytccc-stv-cat");
+    const hasPanel = !!picker.querySelector(".ytccc-stv-panel");
+    if (hasCat && hasPanel) return;
+    const row = findCategoryRow(picker);
+    if (row) injectStvIntoPicker(picker);
+  });
+  obs.observe(picker, { childList: true, subtree: true });
+};
+
+// Scrolling the native emoji list to its end auto-opens the 7TV panel (the
+// 7TV pool sits "after" the stock emojis). The jump fires once per
+// bottom-arrival: leaving the end clears the flag, so closing the panel and
+// scrolling back re-arms it. Search mode is user-driven and never auto-opens.
+const bindStvAutoJump = (picker: Element): void => {
+  const scroller = (picker.querySelector("#categories") ||
+    picker.querySelector("#categories-wrapper")) as HTMLElement | null;
+  if (!scroller || typeof scroller.addEventListener !== "function") return;
+  if (scrollBound.has(scroller)) return;
+  scrollBound.add(scroller);
+  scroller.addEventListener("scroll", () => {
+    const sh = scroller.scrollHeight;
+    const ch = scroller.clientHeight;
+    // Not scrollable / not laid out yet: no "end" exists to reach. This also
+    // blocks a hidden picker (0/0 metrics) from tripping the jump.
+    if (!(sh > ch + 8)) {
+      stvWasAtEnd = false;
+      return;
+    }
+    const atEnd = scroller.scrollTop + ch >= sh - 8;
+    if (!atEnd) {
+      stvWasAtEnd = false;
+      return;
+    }
+    if (stvWasAtEnd) return;
+    stvWasAtEnd = true;
+    if (stvPanelOpen || stvSearch) return;
+    stvActive = { kind: "global" };
+    stvPanelOpen = true;
+    renderStvPanel();
+    const p = stvPanelEl;
+    if (p) p.scrollTop = 0;
+  });
+};
+
 const injectStvIntoPicker = (picker: Element): void => {
   const row = findCategoryRow(picker);
   if (!row) return;
-  ensureStvButtons(row);
+  ensureStvButtons(row, picker);
   if (!rowBound.has(row)) {
     rowBound.add(row);
     row.addEventListener("click", onRowCaptureClick, true);
@@ -594,6 +686,8 @@ const injectStvIntoPicker = (picker: Element): void => {
       renderStvPanel();
     });
   }
+  bindStvAutoJump(picker);
+  ensurePickerWatch(picker);
   renderStvPanel();
 };
 
