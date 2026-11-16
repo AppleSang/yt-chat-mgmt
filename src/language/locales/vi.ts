@@ -51,6 +51,7 @@ export const vi: Dict = {
   botMessagePlaceholder: "(tin nhắn bot)",
   toastPreviewBody: "Extension này có mặt trên GitHub: https://github.com/AppleSang/yt-chat-mgmt",
   cleanedPrefix: "Đã dọn: {text}",
+  altTrashTitle: "Xoá tin nhắn lệnh",
   modPollNotAllowed: "Chỉ mod / chủ kênh mới được tạo bình chọn",
   modPollInvalid: "Cú pháp: !poll câu hỏi // lựa chọn 1 // lựa chọn 2",
   modPollCreated: "Đã tạo cuộc bình chọn",

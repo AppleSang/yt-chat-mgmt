@@ -65,3 +65,13 @@
 3. Bật toggle `modPoll` trong popup (mặc định tắt). Đúng vai trò (mod/owner) + đủ trường → POST `live_chat/create_poll` (SAPISIDHASH như moderate) với `questionText`/`optionText` dạng `text_segments`.
 4. Thiếu `params` sau khi tự suy ra continuation và thử mọi fallback → toast hướng dẫn; sai vai trò/thiếu trường → toast lỗi.
 5. Tin `!poll` tiếp tục được dọn như lệnh thường (F1).
+
+## F11. Xoá nhanh bằng Alt+click (tay của F1) — `commands.ts`
+1. **Giữ `Alt`** → `ytccc-alt-del-on` lên `documentElement`: viền đỏ + crosshair chỉ trên dòng `!` (`data-ytccc-command` — được gắn cả khi cleaner tắt), đồng thời quét một lượt pointerenter/pointerover/mousemove tổng hợp để thúc YouTube stamp bộ nút mod native.
+2. **Nguồn nút xoá trên từng dòng `!`** (thứ tự ưu tiên):
+   - **Nút native**: YouTube stamp bộ 🗑/⏳/⊘ từ `data.inlineActionButtons` — payload server chỉ gửi mod trên stream live. Có sẵn hoặc stamp được (tự đăng ký `stampDom["data.inlineActionButtons"]` + replay `data`) → bấm thẳng nút thùng rác native = xoá qua đúng pipeline YouTube.
+   - **Nút tự dựng (synth)**: dòng không có payload → tạo `yt-icon-button.ytccc-inline-trash` (icon xoá Material, tròn 32px, tooltip i18n `altTrashTitle`) gắn vào `#inline-action-buttons`; CSS `:has(#inline-action-buttons > *)` force hiện container khi giữ Alt.
+   - Chuỗi xoá dùng chung `deleteViaScraped`: params đã scrape → API `live_chat/moderate` im lặng → menu ngữ cảnh → retry API một lần; ẩn local khi thành công.
+3. **Alt+click dòng `!`** hoặc bấm nút (native/synth) → đúng MỘT đường xoá: native press ưu tiên (synth bị loại khỏi phép dò để không bấm vòng), không có native thì `deleteViaScraped`; thất bại → chớp viền đỏ 700ms, không đổi trạng thái.
+4. **Vệ sinh**: nhả Alt / mất focus → xoá toàn bộ nút synth; bản copy trong dải ghim (`yt-live-chat-banner-manager`) được bảo vệ hoàn toàn; bấm ngoài dòng `!` hoặc không giữ Alt → hành vi native nguyên vẹn.
+5. Test: `alt-delete-test.cjs` (32 case — native/synth/force-stamp/chain/flash/pinned/no-Alt).

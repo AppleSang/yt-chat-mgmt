@@ -2,6 +2,17 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.109
+- **Giải phẫu đúng cơ chế nút mod của YouTube** (đọc bundle chat của YouTube trong trình duyệt): bộ nút 🗑/⏳/⊘ được stamp từ **`data.inlineActionButtons`** — trường payload mà server CHỈ gửi cho mod trên stream đang live; `computeHasInlineActionButtons(data)` kiểm tra mảng này, stamper ghi nút vào `#inline-action-buttons` qua registry `stampDom["data.inlineActionButtons"]` (chỉ đăng ký khi renderer bật cờ support — đây là chỗ stream test offline bị trống).
+- **Giữ Alt → dòng `!` có bộ nút xoá**: mỗi lần nhấn Alt quét một lượt — giả lập hover (pointerenter/over/move) để thúc stamp native; dòng có payload nhưng chưa stamp → tự đăng ký stamper + replay data; dòng trống payload → **tự dựng nút thùng rác giống native** (icon xoá Material, nút tròn 32px, tiêu đề i18n) gắn vào `#inline-action-buttons`. Bấm vào nút synth hoặc Alt+click dòng đều đi qua một đường xoá duy nhất: params đã scrape → API im lặng → menu ngữ cảnh; thất bại → chớp viền đỏ. Nhả Alt/mất focus là dọn toàn bộ nút synth.
+- **Alt+click ưu tiên bấm nút native**: bộ nút native (server gửi cho mod) được bấm thật → xoá qua đúng pipeline YouTube; nút synth bị loại khỏi phép dò nút native để không bấm vòng tròn.
+- Kiểm chứng: build sạch; Alt-delete test 32/32 (thêm: dòng native không bị thêm synth / dòng có payload nhận registry stamper / dòng trống nhận synth có i18n / bấm trực tiếp nút synth không xoá vòng / nhả Alt dọn sạch); harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9.
+
+## 1.0.108
+- **Alt+click tự bấm nút thùng rác native**: giữ Alt + bấm vào dòng `!` giờ ưu tiên BẤM THẲN nút thùng rác inline của YouTube (cái nút tròn cạnh tên tác giả mà mod/host có khi hover — 🗑/⏳/⊘) thay vì giả lập API. Xoá đi qua đúng pipeline kiểm duyệt native của YouTube, kể cả nút đang bị ẩn (click lập trình không cần container hiện ra). Khi YouTube chưa stamp nút (chat offline, viewer không phải mod, A/B) mới rơi về chuỗi cũ: params → API im lặng → menu ngữ cảnh → chớp viền đỏ.
+- **Thúc stamp + hiện nút mod khi giữ Alt**: nhả Alt xuống là quét một lượt pointerenter/pointerover/mousemove tổng hợp lên các dòng để YouTube hover-stamp bộ nút inline; stylesheet Alt thêm rule `:has(#inline-action-buttons > *)` force `display:inline-flex` cho các bộ nút đã stamp mà YouTube đang giấu (không hover thật vẫn thấy).
+- Kiểm chứng: build sạch; Alt-delete test 22/22 (thêm: nút native được bấm + API không gọi + không ẩn hộ / nudge 3 loại event khi giữ Alt / CSS `:has` reveal); harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9. Cảnh báo xác thực live: stream test đã offline nên chưa thử được stamp thật — dùng stream đang LIVE của mod/host để xem bộ nút; dù không stamp vẫn xoá được nhờ fallback.
+
 ## 1.0.107
 - **Alt+click thu hẹp phạm vi = tay của command cleaner**: chỉ các tin nhắn bắt đầu bằng ký tự lệnh (`!` — theo `prefix` cấu hình) mới bị xoá khi giữ Alt + bấm; tin thường giữ nguyên hành vi native (link, menu...). Thay thế thao tác 3 chấm → Xoá thủ công cho spam `!` (hữu dụng nhất khi auto cleaner đang tắt). Dòng lệnh được gắn `data-ytccc-command` ngay cả khi cleaner tắt, nên highlight viền đỏ khi giữ Alt chỉ hiện trên đúng các dòng `!`.
 - Kiểm chứng: build sạch; Alt-delete test 17/17 (thêm: CSS giới hạn dòng lệnh / tag đúng dòng / tin thường không bị xoá + không flash); harness 24/24; picker 47/47; cache 11/11; banner 12/12; dock 18/18; badge 9/9.

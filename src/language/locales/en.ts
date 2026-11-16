@@ -49,6 +49,7 @@ export const en = {
   botMessagePlaceholder: "(bot message)",
   toastPreviewBody: "This extension is available on GitHub: https://github.com/AppleSang/yt-chat-mgmt",
   cleanedPrefix: "Cleaned: {text}",
+  altTrashTitle: "Delete command message",
   modPollNotAllowed: "Only mods / the channel owner can create polls",
   modPollInvalid: "Syntax: !poll question // option 1 // option 2",
   modPollCreated: "Poll created",
