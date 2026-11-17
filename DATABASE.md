@@ -26,6 +26,7 @@ Ghi chú: `botToastSeconds` clamp bằng `Number.isFinite` (an toàn với 0), k
 | `deletedLog` | DeletedLogEntry[] (tối đa 200) | Lịch sử tin đã dọn: `{ author, text, at (epoch ms), role, avatar? }` |
 | `switchStatus` | `{ state, at }` | Trạng thái curtain auto-live-chat: `state ∈ "switching" \| "done" \| "failed" \| "off" \| "unknown"` |
 | `pollParams` / `pollContext` | string | `params` + `context.client` (JSON) của create_poll bắt được từ lần chủ kênh tạo bình chọn thủ công — seed lại vào dataset khi boot để `!poll` không cần warm-up lại mỗi phiên |
+| `ownHandle` | string | Handle của viewer dò được từ menu guide ("Kênh của bạn" → `/@handle`, không kèm `@`) — trang chính ghi, iframe chat + popup "Xin chào @user" đọc (R11/R12) |
 
 ## 3. `public/emotes.json` — emote custom
 ```json
@@ -54,6 +55,8 @@ Ghi chú: `botToastSeconds` clamp bằng `Number.isFinite` (an toàn với 0), k
 | `.ytccc-catalog-section` | emoji picker YouTube | catalog emote custom |
 | `data-ytccc-emote-field="1"` | field từng chứa emote | đánh dấu field cần flush khi submit |
 | `data-ytccc-poll-params` / `data-ytccc-poll-context` | `documentElement` (do inject.ts ghi) | `params` + `context.client` của create_poll, bắt từ lần chủ kênh tạo poll thủ công (hook fetch/XHR) hoặc quét `ytInitialData` — dùng cho lệnh `!poll` |
+| `span.ytccc-self-mention` | trong `#message` | chip highlight tên chính mình (F12), mimic chip `#mention` của YouTube |
+| `#ytccc-mention-style` | head | CSS chip mention qua biến `--ytccc-mention-bg/fg` trên `documentElement` |
 | phần tử ẩn tin (`hideLocally`) | tin nhắn | registry `hiddenMessages` trong commands.ts để reveal lại |
 
 ## 6. API ngoài (không chính thức)

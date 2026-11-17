@@ -14,6 +14,7 @@ export const vi: Dict = {
   popup7tvCard: "Cài đặt 7TV",
   popup7tvTrigger: "Ký tự gọi emoji: |",
   popupNewUpdate: "Cập nhật mới!!!",
+  popupHelloUser: "Xin chào @{user}",
   popupDevBuild: "dev-build",
   popupEmoteHqWarn: "Đang chạy emoji 2x — đang cache 4x, xong sẽ tự chuyển.",
   popupModPoll: "Mod có thể tạo cuộc bầu chọn (“!poll”)",

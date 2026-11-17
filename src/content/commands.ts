@@ -150,6 +150,55 @@ export const closeAnyMenus = (toggleBtn?: Element | null): void => {
   }
 };
 
+// --- native trash confirm dialog ---------------------------------------------
+// Pressing YouTube's inline trash opens a confirm dialog ("Delete message?").
+// Auto-confirm it immediately, then - measured from the moment the dialog
+// APPEARED - send ESC exactly 500ms later as the safety net, so a failed
+// confirm click can never leave the dialog stuck over the chat.
+const confirmButtonOf = (dialog: Element): HTMLElement | null => {
+  // The yt-button-renderer hosts the real clickable <button>.
+  return (
+    dialog.querySelector<HTMLElement>("#confirm-button button") ||
+    dialog.querySelector<HTMLElement>("#confirm-button")
+  );
+};
+
+const handleConfirmDialog = (dialog: Element): void => {
+  const btn = confirmButtonOf(dialog);
+  if (btn) btn.click();
+  window.setTimeout(() => {
+    // The dialog disconnects as soon as the confirm succeeds; still being
+    // mounted 500ms after it appeared means the click did not go through.
+    if (dialog.isConnected) {
+      pressEscape();
+      log("confirm dialog stuck - sent ESC");
+    }
+  }, 500);
+};
+
+let confirmWatch: number | null = null;
+
+const watchConfirmDialog = (): void => {
+  if (confirmWatch !== null) {
+    window.clearInterval(confirmWatch);
+    confirmWatch = null;
+  }
+  confirmWatch = window.setInterval(() => {
+    const dialog = document.querySelector("ytd-popup-container yt-confirm-dialog-renderer");
+    if (!dialog) return;
+    window.clearInterval(confirmWatch!);
+    confirmWatch = null;
+    handleConfirmDialog(dialog);
+  }, 60);
+  // No dialog within 1.2s means the action ran without one; stop polling.
+  window.setTimeout(() => {
+    if (confirmWatch !== null) {
+      window.clearInterval(confirmWatch);
+      confirmWatch = null;
+    }
+  }, 1200);
+};
+
 const deleteViaApi = async (
   el: HTMLElement,
   params: string
@@ -468,11 +517,13 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
   await logMessage(author, text, role, avatar);
 
   // Delete without the 3-dot dance: press the native inline trash when the
-  // server stamped it, otherwise the silent moderate API with the scraped
-  // params. No context-menu simulation anywhere.
+  // server stamped it (the confirm dialog is auto-handled below), otherwise
+  // the silent moderate API with the scraped params. No context-menu
+  // simulation anywhere.
   const trash = findInlineTrash(el);
   if (trash) {
     trash.click();
+    watchConfirmDialog();
     hideLocally(el);
     return;
   }
@@ -499,12 +550,11 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
 // that mods get on hover): Alt+click simply presses it natively, so the delete
 // runs through YouTube's regular moderation pipeline. YouTube stamps those
 // buttons from data.inlineActionButtons, a payload field the server only
-// sends to moderators on live chats. Where it is missing we make the delete
-// targets ourselves: force-register the stamper for rows that carry the data
-// but never stamped, and as a last resort grow a lookalike trash button wired
-// to the scraped-params API / context-menu chain the "!"-cleanup uses. While
-// Alt is down a document class paints a red outline on hovered rows, shows the
-// containers and removes everything on release; a failed delete flashes the
+// sends to moderators on live chats - but we never SUMMON them ourselves:
+// no hover nudge, no forced stamping, otherwise every visible row would grow
+// the full trash/mute/ban icon set while Alt is held. Alt mode only paints a
+// red outline on hovered "!" rows and grows our single lookalike trash button
+// on command rows that carry no stamped actions; a failed delete flashes the
 // row. Non-moderators simply fail silently (flash, no state change).
 let altDown = false;
 
@@ -517,26 +567,6 @@ const setAltHighlight = (on: boolean): void => {
     // Synth buttons are an Alt-mode-only affordance: leaving them behind would
     // collide with the native stamping once YouTube renders it.
     document.querySelectorAll(".ytccc-inline-trash").forEach((n) => n.remove());
-  }
-};
-
-// Pointer events are what modern YouTube hover handlers listen to; MouseEvent
-// is the runtime fallback (jsdom/tests have no PointerEvent constructor).
-type HoverCtor = new (type: string, init?: PointerEventInit) => Event;
-
-// Nudges YouTube's hover pipeline to stamp the native inline action buttons
-// without a real mouse: harmless no-op wherever the stamping never happens.
-const revealInlineActions = (el: HTMLElement): void => {
-  try {
-    const Ctor: HoverCtor =
-      (window as unknown as { PointerEvent?: HoverCtor }).PointerEvent ||
-      (MouseEvent as unknown as HoverCtor);
-    el.dispatchEvent(new Ctor("pointerenter", { bubbles: false, composed: true, pointerType: "mouse" }));
-    el.dispatchEvent(new Ctor("pointerover", { bubbles: true, composed: true, pointerType: "mouse" }));
-    el.dispatchEvent(new Ctor("mousemove", { bubbles: true, composed: true, pointerType: "mouse" }));
-  } catch {
-    // Engines rejecting pointerType still get a plain hover nudge.
-    el.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
   }
 };
 
@@ -553,49 +583,6 @@ const findInlineTrash = (el: HTMLElement): HTMLElement | null => {
     if (!b.dataset.ytcccSynth) return b;
   }
   return null;
-};
-
-// The stamper registry lives on the renderer instance; when the server did
-// send inlineActionButtons but the support flag kept them unstamped, register
-// the entry ourselves and replay the data so the stamper runs. Read-only for
-// rows without the payload (returns false - the synth button covers those).
-const forceStampNativeButtons = (el: HTMLElement): boolean => {
-  const anyEl = el as unknown as {
-    data?: { inlineActionButtons?: unknown[]; additionalInlineActionButtons?: unknown[] } | null;
-    stampDom?: Record<string, unknown>;
-    notifyPath?: (path: string) => void;
-  };
-  try {
-    const d = anyEl.data;
-    if (!d) return false;
-    if (!(d.inlineActionButtons && d.inlineActionButtons.length) &&
-        !(d.additionalInlineActionButtons && d.additionalInlineActionButtons.length)) return false;
-    anyEl.stampDom = anyEl.stampDom || {};
-    if (!anyEl.stampDom["data.inlineActionButtons"]) {
-      // Same mapping YouTube's beforeRegister builds for supported renderers.
-      anyEl.stampDom["data.inlineActionButtons"] = {
-        id: "inline-action-buttons",
-        mapping: {
-          buttonRenderer: {
-            component: "yt-button-renderer",
-            properties: { overrides: "[[filledButtonOverrides]]" }
-          }
-        }
-      };
-    }
-    const box = el.querySelector("#inline-action-buttons");
-    if (box && box.children.length) return true;
-    // Replay the payload so the stamper reacts to the registered entry.
-    if (anyEl.notifyPath) {
-      anyEl.notifyPath("data.inlineActionButtons");
-    } else {
-      anyEl.data = null;
-      anyEl.data = d;
-    }
-    return !!(box && box.children.length);
-  } catch {
-    return false;
-  }
 };
 
 // Material icon trash path - the same glyph YouTube's delete action uses.
@@ -658,6 +645,7 @@ const altDeleteMessage = async (el: HTMLElement): Promise<void> => {
   const trash = findInlineTrash(el);
   if (trash) {
     trash.click();
+    watchConfirmDialog();
     return;
   }
   if (!(await deleteViaScraped(el))) {
@@ -674,12 +662,10 @@ const altHoverCss = MESSAGE_SELECTOR.split(",")
   .map((s) => `.ytccc-alt-del-on ${s.trim()}[data-ytccc-command]:hover`)
   .join(", ");
 
-// Force-shows already-stamped inline action buttons while Alt is held:
-// YouTube keeps their container display:none until a real hover, which may
-// never come during quick cleanup.
+// No reveal rule for the native containers: Alt mode must never pop the
+// trash/mute/ban icon set on rows we didn't stamp - the only icons Alt mode
+// paints are our own synth trash buttons on "!" rows.
 const inlineRevealCss =
-  ".ytccc-alt-del-on #inline-action-button-container:has(#inline-action-buttons > *){display:inline-flex!important;}" +
-  // Lookalike trash button, sized like YouTube's round hover actions.
   ".ytccc-alt-del-on .ytccc-inline-trash{width:32px;height:32px;min-width:32px;min-height:32px;padding:0;border-radius:50%;background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;margin:0 2px;flex-shrink:0;}" +
   ".ytccc-alt-del-on .ytccc-inline-trash:hover{background:rgba(255,255,255,0.18);}" +
   ".ytccc-alt-del-on .ytccc-inline-trash svg{width:18px;height:18px;fill:currentColor;pointer-events:none;}";
@@ -697,15 +683,13 @@ export const initAltDelete = (): void => {
   window.addEventListener("keydown", (e) => {
     if (e.key === "Alt" && !altDown) {
       setAltHighlight(true);
-      // One sweep per Alt press: nudge the hover pipeline on every row, then
-      // give each command row its delete target - native buttons when the
-      // server sent them (force-stamped if needed), a synth trash otherwise.
+      // One sweep per Alt press: command rows get their delete target - the
+      // native trash when the server already stamped it, our single synth
+      // trash otherwise. No hover nudge and no forced stamping: the full
+      // trash/mute/ban icon set must not appear on every visible row.
       document.querySelectorAll<HTMLElement>(MESSAGE_SELECTOR).forEach((row) => {
-        revealInlineActions(row);
         if (!row.dataset.ytcccCommand) return;
-        // Native buttons win whenever they exist or can be stamped; the synth
-        // trash is only for rows with no action payload at all.
-        if (findInlineTrash(row) || forceStampNativeButtons(row)) return;
+        if (findInlineTrash(row)) return;
         synthTrashFor(row);
       });
     }

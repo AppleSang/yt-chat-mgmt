@@ -5,7 +5,7 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 ## R1. Dọn lệnh (cleanup) — 2 công tắc: "Ẩn lệnh" (`enabled`) + "Dọn lệnh" (`commandDelete`)
 - R1.1. Tin nhắn chat bắt đầu bằng prefix lệnh (mặc định `!`, lưu config nhưng **không có UI** — luôn `!`) là tin lệnh (VD `!song`, `!points`).
 - R1.2. Hai tay nằm **cùng một dòng popup**: Ẩn lệnh (Command hider — công tắc gốc) bên trái, Dọn lệnh (Command cleanup — tay xoá) bên phải. Dọn lệnh **chỉ hiện khi Ẩn lệnh bật** (`#commandDeletePair` ẩn qua `.opt-pair[hidden] { display: none }` — author `display:flex` đè luật UA `[hidden]` nên cần guard CSS riêng) và **bị ép TẮT trong storage** khi Ẩn lệnh tắt (popup ghi `commandDelete: false` khi load lẫn khi tắt; bật lại Ẩn lệnh → tay xoá xuất phát từ TẮT).
-- R1.3. `commandDelete = true`: tin lệnh bị **xoá tự động, KHÔNG dùng menu 3 chấm** — theo thứ tự: (1) bấm thật nút thùng rác native khi server gửi bộ nút mod (`data.inlineActionButtons`), (2) gọi API `live_chat/moderate` im lặng bằng params đã scrape (SAPISIDHASH từ cookie, hỗ trợ cả studio origin). Thiếu cả hai → ẩn local im lặng (không toast lỗi).
+- R1.3. `commandDelete = true`: tin lệnh bị **xoá tự động, KHÔNG dùng menu 3 chấm** — theo thứ tự: (1) bấm thật nút thùng rác native khi server gửi bộ nút mod (`data.inlineActionButtons`) — YouTube mở hộp xác nhận xoá → extension **tự bấm nút xác nhận** ngay khi dialog render (poll 60ms, tối đa 1.2s; hộp thoại còn kẹt sau 500ms → gửi ESC đóng), (2) gọi API `live_chat/moderate` im lặng bằng params đã scrape (SAPISIDHASH từ cookie, hỗ trợ cả studio origin). Thiếu cả hai → ẩn local im lặng (không toast lỗi).
 - R1.4. Nếu xoá thất bại (không đủ quyền, hết params...): **ẩn local im lặng** (KHÔNG toast lỗi), người dùng không thấy tin.
 - R1.5. Tin của chính mình / chủ stream / mod cũng bị xử lý (không ngoại trừ ai).
 - R1.6. `commandDelete = false` (Ẩn lệnh vẫn bật): tin lệnh chỉ bị **ẩn local** — không gọi API, không thử xoá, không toast, không ghi log; dòng vẫn tag `data-ytccc-command` để Alt+click xoá thủ công; `!poll` vẫn tạo bình chọn nếu modPoll bật (tạo poll ≠ xoá tin).
@@ -63,7 +63,17 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 - R10.4. Sai vai trò (không phải mod/owner) hoặc thiếu trường → toast lỗi tương ứng; tin `!poll` vẫn được dọn như lệnh thường (R1).
 - R10.5. Nếu `modPoll` tắt, `!poll` được coi như lệnh thường (chỉ dọn, không tạo poll).
 
-## R11. Kỹ thuật bắt buộc
+## R11. Highlight tên chính mình trong chat
+- R11.1. Extension **tự dò handle** của viewer từ menu guide trang chính (mục "Kênh của bạn" — `#section-items > ytd-guide-entry-renderer:first-child a[href^="/@"]`, fallback `#guide-links-primary`); iframe chat (không có guide) nhận handle qua `chrome.storage.local.ownHandle` ghi bởi trang chính + listener onChanged.
+- R11.2. Mọi text trong `#message` chứa handle (kèm hoặc không kèm `@`) được bọc `span.ytccc-self-mention` — biên từ an toàn: không wrap khi dính chữ/`@` hai bên (VD `x@handle`), giữ nguyên chip `#mention` native của YouTube.
+- R11.3. Chip tự dựng **mimic chip mention của YouTube**: copy `background`/`color` từ một chip `#mention` thật khi gặp (một lần), fallback nền sáng mờ + chữ trắng.
+- R11.4. Idempotent: sweep 3s + sweep khi handle mới về (`sweepMentions`) không wrap lặp; không mutate khi pattern không match (chống vòng lặp mutation).
+
+## R12. Popup chào khi đã cập nhật
+- R12.1. Khi version popup **== release mới nhất trên GitHub**, badge cập nhật hiện "**Xin chào @user**" (`popupHelloUser` — en: "Hello @user") thay vì trống; dùng handle từ `ownHandle`, không phải link.
+- R12.2. Trạng thái khác giữ nguyên: có bản mới → badge vàng "New Update!!! x.y.z" (link releases); dev-build → badge tím "dev-build"; không dò được handle ở trạng thái hello → ẩn badge.
+
+## R13. Kỹ thuật bắt buộc
 - Build qua `node build.mjs` (typecheck tsc + esbuild + copy static). Mọi thay đổi phải build sạch.
 - Test harness jsdom (`ytccc-test/test.js`) phải pass 16/16.
 - Bump version mỗi bộ thay đổi (bump-version.ps1) + ghi CHANGELOG.md.

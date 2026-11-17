@@ -12,6 +12,7 @@ export const en = {
   popup7tvCard: "7TV settings",
   popup7tvTrigger: "Emote trigger: |",
   popupNewUpdate: "New Update!!!",
+  popupHelloUser: "Hello @{user}",
   popupDevBuild: "dev-build",
   popupEmoteHqWarn: "Running 2x emoji — caching 4x, switches automatically when done.",
   popupModPoll: "Mods can create polls (\"!poll\")",

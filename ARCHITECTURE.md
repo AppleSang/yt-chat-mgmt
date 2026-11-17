@@ -3,8 +3,8 @@
 ## 1. Tổng quan
 - Chrome Extension **Manifest V3**, TypeScript (esbuild bundle, không framework).
 - Thành phần: background service worker + content script (chat) + popup (action popup).
-- Build: `node build.mjs` — chạy `tsc --noEmit` (spawnSync với `process.execPath`), esbuild bundle 4 entry → `dist/`, copy static từ `public/`. `cleanDist` best-effort (Chrome khoá `dist\content` khi extension đang load → ghi đè tại chỗ).
-- Bump version: `bump-version.ps1` (ghi `public/manifest.json`). Chrome load thư mục `dist/`.
+- Build: `node build.mjs` — chạy `tsc --noEmit` (spawnSync với `process.execPath`), **tự bump patch version trong `manifest.json` trước khi bundle** (watch rebuild không bump), esbuild bundle 4 entry → `dist/`, copy static từ `public/`. `cleanDist` best-effort (Chrome khoá `dist\content` khi extension đang load → ghi đè tại chỗ).
+- Bump version thủ công: `bump-version.ps1` (dự phòng, build.mjs đã tự bump). Chrome load thư mục `dist/`.
 - Không có git repo; `_legacy/` là backup JS trước khi chuyển TypeScript.
 
 ## 2. Cấu trúc thư mục
@@ -20,7 +20,8 @@ src/
   content/
     index.ts        # boot + observers + sweeps (điểm vào content script)
     config.ts       # DEFAULTS, loadConfig, watchConfig, isBot
-    commands.ts     # detect/hide/xoá lệnh qua moderate API, deletedLog, revealHiddenMessages
+    commands.ts     # detect/hide/xoá lệnh qua moderate API, deletedLog, revealHiddenMessages, Alt+click (synth trash), confirm dialog tự bấm
+    mention.ts      # highlight tên chính mình: dò handle từ guide, wrap chip .ytccc-self-mention (F12)
     dom.ts          # MESSAGE_SELECTOR, applyBadges (badge+avatar), ROLE_COLORS
     toast.ts        # toast trong vùng chat
     curtain.ts      # auto live chat switch (overlay + icon128)
@@ -51,11 +52,12 @@ build.mjs  bump-version.ps1  dist/
 - Node text chứa `\u200b` bỏ qua khi quét emote (chống re-process).
 
 ## 5. Kiểm thử
-- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 16 test, load `dist\content\content.js`. Phải pass 16/16 trước khi phát hành.
+- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 24 test, load `dist\content\content.js`. Phải pass 24/24 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 10, popup-update 12, popup-hider 10, command-hider 13...).
 - Kiểm thử tay: load `dist/` vào Chrome → reload extension → **F5 trang** (SPA giữ content script cũ — nguyên nhân nhiễu khi debug).
 
 ## 6. Quy ước code
 - TS strict; module ESM; không thêm thư viện ngoài (esbuild + tsc là đủ).
 - Hàm nhỏ, có comment tiếng Anh giải thích "tại sao" (không comment vô nghĩa).
 - Key i18n mới: thêm cả `vi.ts` và `en.ts`.
-- Mọi thay đổi: build sạch + 16/16 + bump version + ghi CHANGELOG.md.
+- Mọi thay đổi: build sạch (tự bump) + 24/24 + ghi CHANGELOG.md.
+- **Chống vòng mutation khi thay text node**: chỉ `replaceChild` khi nội dung mới KHÁC node gốc (bài học applyMention 1.0.117 — thay fragment giống hệt → observer tự kích hoạt vô hạn).

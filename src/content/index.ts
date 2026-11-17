@@ -7,6 +7,7 @@ import {
   initAltDelete
 } from "./commands";
 import { applyBadges } from "./dom";
+import { applyMention, initMention, startHandleDetect } from "./mention";
 import {
   EMOTE_TEXT_SELECTOR,
   POLL_SELECTOR,
@@ -66,6 +67,7 @@ const handleAddedNode = (node: Node): void => {
     applyBadges(el);
     void processMessage(el);
     applyEmotes(el);
+    applyMention(el);
   }
   if (el.matches && el.matches(POLL_SELECTOR)) {
     schedulePollEmotes(el);
@@ -76,6 +78,7 @@ const handleAddedNode = (node: Node): void => {
       applyBadges(msg);
       void processMessage(msg);
       applyEmotes(msg);
+      applyMention(msg);
     });
     el.querySelectorAll(EMOTE_TEXT_SELECTOR).forEach((t) => {
       const target = t as HTMLElement;
@@ -87,19 +90,21 @@ const handleAddedNode = (node: Node): void => {
   }
 };
 
-const boot = (): boolean => {
-  if (!document.querySelector("yt-live-chat-app, #chat-items")) return false;
-  document.querySelectorAll<HTMLElement>(MESSAGE_SELECTOR).forEach((el) => {
-    applyBadges(el);
-    void processMessage(el);
-    applyEmotes(el);
-  });
-
-  const emoteSweep = (): void => {
+  const boot = (): boolean => {
+    if (!document.querySelector("yt-live-chat-app, #chat-items")) return false;
     document.querySelectorAll<HTMLElement>(MESSAGE_SELECTOR).forEach((el) => {
       applyBadges(el);
+      void processMessage(el);
       applyEmotes(el);
+      applyMention(el);
     });
+
+    const emoteSweep = (): void => {
+      document.querySelectorAll<HTMLElement>(MESSAGE_SELECTOR).forEach((el) => {
+        applyBadges(el);
+        applyEmotes(el);
+        applyMention(el);
+      });
     // Comments / community posts (watch pages) and viewer-engagement
     // messages (poll summaries) — engagement passes the #message element
     // itself, which applyEmotes handles since the self-element fix.
@@ -140,7 +145,10 @@ const boot = (): boolean => {
       m.addedNodes.forEach(handleAddedNode);
       if (m.addedNodes.length && m.target && (m.target as HTMLElement).closest) {
         const msgEl = (m.target as HTMLElement).closest(MESSAGE_SELECTOR) as HTMLElement | null;
-        if (msgEl) applyEmotes(msgEl);
+        if (msgEl) {
+          applyEmotes(msgEl);
+          applyMention(msgEl);
+        }
         const pollEl = (m.target as HTMLElement).closest(POLL_SELECTOR) as HTMLElement | null;
         if (pollEl) schedulePollEmotes(pollEl);
       }
@@ -175,6 +183,11 @@ const main = async (): Promise<void> => {
     location.hostname === "www.youtube.com" &&
     location.pathname.startsWith("/live_chat");
   const isStudio = location.hostname === "studio.youtube.com";
+
+  // The guide menu ("Your channel" -> /@handle) only exists on main pages,
+  // never inside the live_chat iframe - detect there and share via storage.
+  initMention();
+  if (!isChatFrame) startHandleDetect();
 
   // When cleanup is turned off, show every message we had hidden again.
   // Any settings change also re-applies badges/avatars + emotes to the

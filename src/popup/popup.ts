@@ -167,13 +167,15 @@ const initLanguageSelect = (): void => {
 
 // ---------- update badge ----------
 // Settings-card head shows the release state at a glance: same version ->
-// nothing, older -> pulsing yellow link to the releases page, newer (local
-// dev build) -> static purple tag. GitHub's REST API answers with CORS `*`,
-// so a plain popup fetch needs no extra host permission.
+// "Hello @user" (when the own handle is known), older -> pulsing yellow link
+// to the releases page, newer (local dev build) -> static purple tag.
+// GitHub's REST API answers with CORS `*`, so a plain popup fetch needs no
+// extra host permission.
 const RELEASES_URL = "https://github.com/AppleSang/yt-chat-mgmt/releases";
 
-let updateState: "new" | "dev" | null = null;
+let updateState: "new" | "dev" | "ok" | null = null;
 let updateVersion = "";
+let helloHandle = "";
 
 const parseVersion = (v: string): number[] =>
   v.replace(/^v/, "").split(".").map((n) => parseInt(n, 10) || 0);
@@ -197,18 +199,35 @@ const renderUpdateBadge = (): void => {
     badge.textContent = `${t("popupNewUpdate")} ${updateVersion}`;
     badge.href = RELEASES_URL;
     badge.classList.add("update-new");
-    badge.classList.remove("update-dev");
-  } else {
+    badge.classList.remove("update-dev", "update-hello");
+  } else if (updateState === "dev") {
     badge.textContent = t("popupDevBuild");
     badge.removeAttribute("href");
     badge.classList.add("update-dev");
-    badge.classList.remove("update-new");
+    badge.classList.remove("update-new", "update-hello");
+  } else {
+    // Up to date: greet the user instead of an empty slot. Without a
+    // detected handle (no YouTube page opened yet) the slot stays empty.
+    if (!helloHandle) {
+      badge.hidden = true;
+      return;
+    }
+    badge.textContent = t("popupHelloUser", { user: helloHandle });
+    badge.removeAttribute("href");
+    badge.classList.add("update-hello");
+    badge.classList.remove("update-new", "update-dev");
   }
   badge.hidden = false;
 };
 
 const checkUpdate = async (): Promise<void> => {
   try {
+    // The greeting handle is written by the content script's guide
+    // detection; absent until a YouTube page was opened.
+    const stored = await new Promise<{ ownHandle?: string }>((resolve) => {
+      chrome.storage.local.get({ ownHandle: "" }, (d) => resolve(d));
+    });
+    helloHandle = String(stored.ownHandle || "");
     const res = await fetch(
       "https://api.github.com/repos/AppleSang/yt-chat-mgmt/releases/latest",
       { headers: { Accept: "application/vnd.github+json" } }
@@ -222,9 +241,13 @@ const checkUpdate = async (): Promise<void> => {
       parseVersion(chrome.runtime.getManifest().version || ""),
       parseVersion(tag)
     );
-    if (cmp === 0) return;
-    updateState = cmp < 0 ? "new" : "dev";
-    updateVersion = tag.replace(/^v/, "");
+    if (cmp === 0) {
+      updateState = "ok";
+      updateVersion = "";
+    } else {
+      updateState = cmp < 0 ? "new" : "dev";
+      updateVersion = tag.replace(/^v/, "");
+    }
     renderUpdateBadge();
   } catch (e) {
     /* offline or rate-limited: the badge simply stays hidden */

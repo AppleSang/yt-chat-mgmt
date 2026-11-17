@@ -77,10 +77,15 @@ body {
   cursor: pointer;
   animation: update-pulse 1.2s ease-in-out infinite;
 }
-/* Newer than the latest release (local dev build): static purple tag. */
-.update-badge.update-dev {
-  color: #c58af9;
-}
+  /* Newer than the latest release (local dev build): static purple tag. */
+  .update-badge.update-dev {
+    color: #c58af9;
+  }
+  /* Up to date: "Hello @user" greeting in the same slot (no link, no pulse). */
+  .update-badge.update-hello {
+    color: var(--ink);
+    cursor: default;
+  }
 @keyframes update-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

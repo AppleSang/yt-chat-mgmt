@@ -34,6 +34,7 @@
 - **Nút + (thêm user 7TV)**: bên phải mỗi kết quả tìm kiếm, 26×26 tròn; sau khi thêm → xoá kết quả + ô tìm kiếm.
 - **Nút − (gỡ user 7TV)**: bên phải mỗi user đã thêm, 26×26 tròn; hover `#ff5c5c`.
 - **Slider toast bot**: nằm dưới label `popupBotToast`, kèm giá trị hiện tại (`botToastVal`); 0 hiển thị chữ "Tắt"/"Off" (`popupOff`).
+- **Badge cập nhật (`.update-badge` trong footer)**: 3 trạng thái — (1) có bản mới: vàng + pulse "New Update!!! x.y.z", link tới trang releases; (2) dev-build: tím "dev-build", không link; (3) đã cập nhật: chữ thường "Xin chào @user" (`popupHelloUser`, class `update-hello`, không link, không pulse — handle từ `chrome.storage.local.ownHandle`, ẩn khi không dò được).
 - Nút bấm luôn có trạng thái hover rõ ràng (đổi nền/border 120ms) và `cursor: pointer`.
 
 ## 3. Sidebar / Modal
