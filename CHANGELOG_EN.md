@@ -2,6 +2,12 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.113
+- **Bugfix: turning the hider off left Command cleanup visible in the popup** — root cause: `.opt-pair { display: flex }` in popup.css **overrides the UA `[hidden] { display: none }` rule** (author CSS always beats the UA stylesheet), so the `hidden` property/attribute was set correctly while the `<label id="commandDeletePair">` kept rendering. Added an explicit `.opt-pair[hidden] { display: none }` guard.
+- **Fixed a false-positive test**: the popup-hider test only asserted the `.hidden` property (attribute presence) instead of actual visibility — all four cases now check `getComputedStyle(...).display !== "none"`; the other assertions (checkbox state + stored `commandDelete: false`) are unchanged.
+- Docs synced to the current state: REQUIREMENTS.md R1 rewritten for the two-arm config + menu-less delete flow + the forced-off rule (R1.2/R1.6/R1.7), R8.2 updated to the split row; UI_UX_GUIDELINES.md popup mock now shows "Ẩn lệnh + Dọn lệnh (one split row)".
+- Verified: build auto-bumped 1.0.112 → 1.0.113; popup-hider 10/10 (computed display); popup-update 9/9; harness 24/24.
+
 ## 1.0.112
 - **Command cleanup is forced OFF when the hider is off**: not just hiding the toggle — the popup writes `commandDelete: false` into storage both on load (repairs a stale state) and when the hider switch is turned off. Re-enabling the hider always starts from cleanup OFF; the delete arm must be switched back on deliberately.
 - **`build.mjs` bumps the version itself**: running `node build.mjs` now patches `manifest.json` up before bundling (watch rebuilds do NOT bump). No separate `bump-version.ps1` step anymore (the ps1 file is kept as a fallback).

@@ -2,6 +2,12 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.113
+- **Sửa bug: tắt Ẩn lệnh nhưng Dọn lệnh vẫn hiện trong popup** — gốc rễ: `.opt-pair { display: flex }` trong popup.css **đè luật UA `[hidden] { display: none }`** (CSS author luôn thắng UA stylesheet), nên thuộc tính `hidden` được set đúng nhưng thẻ `<label id="commandDeletePair">` vẫn render. Thêm guard `.opt-pair[hidden] { display: none }` → ẩn hẳn.
+- **Sửa test pass ảo**: popup-hider test chỉ assert property `.hidden` (tồn tại attribute) chứ không assert hiển thị thực — chuyển sang check `getComputedStyle(...).display !== "none"` cho cả 4 case; các assertion khác (checkbox + storage ghi `commandDelete: false`) giữ nguyên.
+- Đồng bộ docs hiện trạng: REQUIREMENTS.md R1 viết lại theo 2 tay config + luồng xoá không menu + quy tắc ép tắt (R1.2/R1.6/R1.7), R8.2 cập nhật dòng kép; UI_UX_GUIDELINES.md mock popup đổi thành "Ẩn lệnh + Dọn lệnh (dòng kép)".
+- Kiểm chứng: build tự bump 1.0.112 → 1.0.113; popup-hider 10/10 (computed display); popup-update 9/9; harness 24/24.
+
 ## 1.0.112
 - **Dọn lệnh bị ép TẮT khi Ẩn lệnh tắt**: không chỉ ẩn toggle — popup ghi `commandDelete: false` vào storage cả khi load (phát hiện trạng thái cũ lệch) lẫn khi tắt công tắc Ẩn lệnh. Bật lại Ẩn lệnh → tay xoá luôn xuất phát từ trạng thái TẮT, phải bật tay lên thì xoá mới chạy.
 - **`build.mjs` tự bump version**: chạy `node build.mjs` là tăng patch trong `manifest.json` trước khi bundle (watch rebuild không bump). Không cần chạy `bump-version.ps1` riêng nữa (file ps1 giữ lại làm dự phòng).

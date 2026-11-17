@@ -2,13 +2,15 @@
 
 Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` (live_chat) và `studio.youtube.com`. Phiên bản hiện tại: xem `public/manifest.json` (đồng bộ CHANGELOG.md).
 
-## R1. Dọn lệnh (cleanup) — master toggle "Dọn lệnh" (`enabled`)
+## R1. Dọn lệnh (cleanup) — 2 công tắc: "Ẩn lệnh" (`enabled`) + "Dọn lệnh" (`commandDelete`)
 - R1.1. Tin nhắn chat bắt đầu bằng prefix lệnh (mặc định `!`, lưu config nhưng **không có UI** — luôn `!`) là tin lệnh (VD `!song`, `!points`).
-- R1.2. Khi `enabled = true`: tin lệnh phải bị **xoá khỏi chat qua API moderate** (youtubei `live_chat/moderate`, SAPISIDHASH từ cookie, hỗ trợ cả studio origin).
-- R1.3. Nếu xoá API thất bại (không đủ quyền, hết params...): **ẩn local im lặng** (KHÔNG toast lỗi), người dùng không thấy tin.
-- R1.4. Tin của chính mình / chủ stream / mod cũng bị xử lý (không ngoại trừ ai).
-- R1.5. Khi `enabled = false`: các module khác (emote, badge, bot...) **vẫn hoạt động**; các tin đã ẩn được khôi phục (`revealHiddenMessages`).
-- R1.6. Mỗi lần dọn thành công → toast "Đã dọn: <nội dung>" và ghi vào log popup.
+- R1.2. Hai tay nằm **cùng một dòng popup**: Ẩn lệnh (Command hider — công tắc gốc) bên trái, Dọn lệnh (Command cleanup — tay xoá) bên phải. Dọn lệnh **chỉ hiện khi Ẩn lệnh bật** (`#commandDeletePair` ẩn qua `.opt-pair[hidden] { display: none }` — author `display:flex` đè luật UA `[hidden]` nên cần guard CSS riêng) và **bị ép TẮT trong storage** khi Ẩn lệnh tắt (popup ghi `commandDelete: false` khi load lẫn khi tắt; bật lại Ẩn lệnh → tay xoá xuất phát từ TẮT).
+- R1.3. `commandDelete = true`: tin lệnh bị **xoá tự động, KHÔNG dùng menu 3 chấm** — theo thứ tự: (1) bấm thật nút thùng rác native khi server gửi bộ nút mod (`data.inlineActionButtons`), (2) gọi API `live_chat/moderate` im lặng bằng params đã scrape (SAPISIDHASH từ cookie, hỗ trợ cả studio origin). Thiếu cả hai → ẩn local im lặng (không toast lỗi).
+- R1.4. Nếu xoá thất bại (không đủ quyền, hết params...): **ẩn local im lặng** (KHÔNG toast lỗi), người dùng không thấy tin.
+- R1.5. Tin của chính mình / chủ stream / mod cũng bị xử lý (không ngoại trừ ai).
+- R1.6. `commandDelete = false` (Ẩn lệnh vẫn bật): tin lệnh chỉ bị **ẩn local** — không gọi API, không thử xoá, không toast, không ghi log; dòng vẫn tag `data-ytccc-command` để Alt+click xoá thủ công; `!poll` vẫn tạo bình chọn nếu modPoll bật (tạo poll ≠ xoá tin).
+- R1.7. Khi `enabled = false`: các module khác (emote, badge, bot...) **vẫn hoạt động**; các tin đã ẩn được khôi phục (`revealHiddenMessages`); tay xoá bị ép tắt theo R1.2.
+- R1.8. Mỗi lần dọn thành công → toast "Đã dọn: <nội dung>" và ghi vào log popup.
 
 ## R2. Ẩn tin bot + toast
 - R2.1. Danh sách bot cấu hình được (mặc định `@nightbot, @streamelements, @streamlabs`), phân tách bằng dấu phẩy/chấm phẩy/xuống dòng, bỏ `@`, so sánh lowercase.
@@ -46,7 +48,7 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 
 ## R8. Popup
 - R8.1. Không header; footer = chọn ngôn ngữ (vi/en).
-- R8.2. Card Cài đặt: Dọn lệnh (checkbox), Tự chuyển Live chat, Ẩn huy hiệu, Ẩn avatar, Danh sách bot, Toast bot (slider 0–35s).
+- R8.2. Card Cài đặt: dòng kép **Ẩn lệnh + Dọn lệnh** (Dọn lệnh chỉ hiện khi Ẩn lệnh bật, tắt theo khi Ẩn lệnh tắt — R1.2), Tự chuyển Live chat, Ẩn huy hiệu, Ẩn avatar, Danh sách bot, Toast bot (slider 0–35s).
 - R8.3. Card 7TV: tìm kiếm user (placeholder `ohapplesang`), nút + để thêm, danh sách đã thêm với nút −.
 - R8.4. Card Nhật ký: các tin đã dọn (avatar, tên, role-tag, nội dung, giờ), nút Xoá, số đếm, trạng thái trống.
 - R8.5. Đổi setting bất kỳ → lưu `chrome.storage.sync` ngay, content script tự quét lại trong 300ms.

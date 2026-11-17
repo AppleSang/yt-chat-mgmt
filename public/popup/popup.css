@@ -355,6 +355,12 @@ footer.lang-footer {
   color: var(--ink);
 }
 
+/* Author display:flex would defeat the UA [hidden] rule, so the cleanup
+   arm needs an explicit guard or it keeps rendering while "hidden". */
+.opt-pair[hidden] {
+  display: none;
+}
+
 /* ---------- Bot list ---------- */
 .bot-list {
   padding-top: 8px;

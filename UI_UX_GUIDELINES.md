@@ -7,7 +7,9 @@
 +-----------------------------+
 | #main (scroll dọc)          |  <- vùng cài đặt, 1 cột
 |   card "Cài đặt"            |
-|     - Dọn lệnh (checkbox)   |
+|     - Ẩn lệnh + Dọn lệnh    |  <- dòng kép: hider trái, cleanup phải;
+|                             |     cleanup chỉ hiện khi Ẩn lệnh bật,
+|                             |     tắt Ẩn lệnh -> ẩn + ép tắt cleanup
 |     - Tự chuyển Live chat   |
 |     - Ẩn huy hiệu           |
 |     - Ẩn avatar             |
