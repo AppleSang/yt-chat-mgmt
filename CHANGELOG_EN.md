@@ -2,6 +2,14 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.123
+Aggregated release of everything since v1.0.102 (full details: the 1.0.122, 1.0.119 and 1.0.117 sections below):
+
+- **Self-updater from GitHub** - an **Update** button on the popup when the badge reports a newer release downloads the latest release zip, unpacks it with a dedicated zip parser (no external library), **verifies the archive's manifest.json matches the release**, overwrites the installation folder through a File System Access handle (picked once, persisted in IndexedDB) and `chrome.runtime.reload()`s the extension. No PowerShell, no chrome://extensions visit. YouTube tabs need an F5 after the reload.
+- **Self-mention highlight** - the extension detects your own handle ("Your channel" guide entry + a passive source: your own account menu on watch pages); text containing the handle gets wrapped in a chip that mimics YouTube's mention chip; two real-DOM bugs fixed: the chip is now an id-less `span.mention` and YouTube inserts a U+200B delimiter after chips.
+- **Command cleanup auto-presses YouTube's confirm dialog** and the Alt icon storm is gone; the popup greets "Hello @user" when up to date.
+- Verified: zip-parser 8/8, update-page 11/11, popup-update 16/16, mention-test 15/15, alt-delete 37/37, harness 24/24, popup-hider 10/10, command-hider 13/13, banner 12/12, dock 18/18, pollcmd/cache ALL PASSED.
+
 ## 1.0.122
 - **Self-updater from GitHub** - an **Update** button on the popup when the badge reports a newer release opens the `update/update.html` page: it downloads the latest release zip (`yt-chat-mgmt-vX.zip`), unpacks it with a dedicated parser (`src/update/zip.ts` - EOCD + central directory, methods 0/8 via `DecompressionStream`, no external library; directory entries / `./` prefixes / zip-slip paths are dropped), **verifies the archive's `manifest.json` matches the release version**, then overwrites the installation folder through a `File System Access` handle (the user picks the folder once, persisted in IndexedDB `ytccc-updater`; `manifest.json` is written last as the completion marker) and finally `chrome.runtime.reload()`s itself. Design rationale: MV3 forbids executing fetched code and Chrome will not let an extension write into its own folder - this is the closest achievable self-update path for unpacked installs (no PowerShell, no chrome://extensions visit).
 - The button **only appears when the local version is older than the release**; other states are unchanged. Any step failure shows details plus "Try again". YouTube tabs need an F5 after the reload (the new content script does not re-enter an old SPA session).

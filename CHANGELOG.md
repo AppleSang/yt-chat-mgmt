@@ -2,6 +2,14 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.123
+Bản phát hành gộp mọi thay đổi kể từ v1.0.102 (chi tiết đầy đủ: các mục 1.0.122, 1.0.119, 1.0.117 bên dưới):
+
+- **Tự cập nhật từ GitHub (self-updater)** — nút **Cập nhật** trên popup khi badge báo có bản mới → tải zip release mới nhất → giải nén bằng zip parser riêng (không thư viện ngoài) → **xác minh `manifest.json` trong zip đúng version release** → ghi đè thư mục cài extension qua `File System Access` (chọn thư mục đúng 1 lần, lưu IndexedDB) → `chrome.runtime.reload()` tự khởi động lại. Không cần PowerShell, không cần vào chrome://extensions. Tab YouTube cần F5 sau reload.
+- **Highlight tên chính mình** — extension tự dò handle (mục "Kênh của bạn" trong guide + nguồn thụ động: menu tài khoản của chính bạn trên trang watch); mọi text chứa handle được bọc chip đỏ mimic chip mention của YouTube; đã sửa 2 lỗi thật trên DOM YouTube: chip giờ là `span.mention` không id, và delimiter U+200B chèn sau chip làm trôi text.
+- **Xoá lệnh bấm xác nhận tự động** (không cần tay bấm OK của YouTube) và bỏ bão icon Alt; **popup chào "Xin chào @user"** khi đã cập nhật.
+- Kiểm chứng: zip-parser 8/8, update-page 11/11, popup-update 16/16, mention-test 15/15, alt-delete 37/37, harness 24/24, popup-hider 10/10, command-hider 13/13, banner 12/12, dock 18/18, pollcmd/cache ALL PASSED.
+
 ## 1.0.122
 - **Tự cập nhật từ GitHub (self-updater)** — nút **Cập nhật** trên popup khi badge báo có bản mới → mở trang `update/update.html`: tải zip release mới nhất (`yt-chat-mgmt-vX.zip`) → giải nén bằng parser riêng (`src/update/zip.ts` — EOCD + central directory, method 0/8 qua `DecompressionStream`, không thư viện ngoài; bỏ entry thư mục / `./`-prefix / zip-slip) → **xác minh `manifest.json` trong zip đúng version release** → ghi đè vào thư mục cài extension qua `File System Access` handle (user chọn thư mục đúng 1 lần, lưu IndexedDB `ytccc-updater`; `manifest.json` ghi cuối làm marker hoàn tất) → `chrome.runtime.reload()` tự khởi động lại. Lý do thiết kế: MV3 cấm thực thi code từ mạng và Chrome không cho extension tự ghi thư mục của nó — đây là con đường tự-cập nhật gần nhất khả thi cho bản unpacked (không cần PowerShell, không cần vào chrome://extensions).
 - Nút **chỉ hiện khi version local < release**; trạng thái khác giữ nguyên. Lỗi bất kỳ bước → hiện chi tiết + "Thử lại". Tab YouTube cần F5 sau reload (content script mới không tự vào lại SPA cũ).
