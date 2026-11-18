@@ -28,6 +28,11 @@ Ghi chú: `botToastSeconds` clamp bằng `Number.isFinite` (an toàn với 0), k
 | `pollParams` / `pollContext` | string | `params` + `context.client` (JSON) của create_poll bắt được từ lần chủ kênh tạo bình chọn thủ công — seed lại vào dataset khi boot để `!poll` không cần warm-up lại mỗi phiên |
 | `ownHandle` | string | Handle của viewer dò được từ menu guide ("Kênh của bạn" → `/@handle`, không kèm `@`) — trang chính ghi, iframe chat + popup "Xin chào @user" đọc (R11/R12) |
 
+## 2b. IndexedDB `ytccc-updater` (trang update, F14)
+| Store / key | Kiểu | Ý nghĩa |
+|---|---|---|
+| `handles` / `extDir` | `FileSystemDirectoryHandle` | Thư mục cài đặt extension do user chọn qua `showDirectoryPicker` (1 lần) — các lần update sau đọc lại handle, xin quyền trong click nếu Chrome thu hồi |
+
 ## 3. `public/emotes.json` — emote custom
 ```json
 [

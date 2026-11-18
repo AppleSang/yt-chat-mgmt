@@ -26,6 +26,7 @@ const els = {
   bannerPosTop: $("bannerPosTop") as HTMLButtonElement,
   bannerPosBottom: $("bannerPosBottom") as HTMLButtonElement,
   updateBadge: $("updateBadge") as HTMLAnchorElement,
+  updateAction: $("updateAction") as HTMLButtonElement,
   sevenTvSearch: $("sevenTvSearch") as HTMLInputElement,
   sevenTvResults: $("sevenTvResults") as HTMLElement,
   sevenTvAdded: $("sevenTvAdded") as HTMLElement,
@@ -191,6 +192,8 @@ const compareVersions = (a: number[], b: number[]): number => {
 
 const renderUpdateBadge = (): void => {
   const badge = els.updateBadge;
+  // The self-updater button only makes sense when a newer release exists.
+  els.updateAction.hidden = updateState !== "new";
   if (!updateState) {
     badge.hidden = true;
     return;
@@ -610,6 +613,11 @@ els.sevenTvSearch.addEventListener("input", () => {
 
 initLanguageSelect();
 initReportIssue();
+// Self-updater button: opens the dedicated update page in a tab so the
+// fetch/unzip/write flow survives the popup closing.
+els.updateAction.addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("update/update.html") });
+});
 // Update badge runs after the language is applied so its text is localized.
 loadLanguage(() => {
   loadAll();

@@ -3,7 +3,7 @@
 ## 1. Tổng quan
 - Chrome Extension **Manifest V3**, TypeScript (esbuild bundle, không framework).
 - Thành phần: background service worker + content script (chat) + popup (action popup).
-- Build: `node build.mjs` — chạy `tsc --noEmit` (spawnSync với `process.execPath`), **tự bump patch version trong `manifest.json` trước khi bundle** (watch rebuild không bump), esbuild bundle 4 entry → `dist/`, copy static từ `public/`. `cleanDist` best-effort (Chrome khoá `dist\content` khi extension đang load → ghi đè tại chỗ).
+- Build: `node build.mjs` — chạy `tsc --noEmit` (spawnSync với `process.execPath`), **tự bump patch version trong `manifest.json` trước khi bundle** (watch rebuild không bump), esbuild bundle 5 entry → `dist/`, copy static từ `public/`. `cleanDist` best-effort (Chrome khoá `dist\content` khi extension đang load → ghi đè tại chỗ).
 - Bump version thủ công: `bump-version.ps1` (dự phòng, build.mjs đã tự bump). Chrome load thư mục `dist/`.
 - Không có git repo; `_legacy/` là backup JS trước khi chuyển TypeScript.
 
@@ -31,10 +31,13 @@ src/
     inject.ts       # đọc client info trang
   popup/
     popup.ts        # render + lưu settings + 7TV GQL search
+  update/
+    update.ts       # trang tự cập nhật: fetch release → zip.ts → ghi thư mục → reload (F14)
+    zip.ts          # zip parser (EOCD + central dir, DecompressionStream, zip-slip guard)
 public/
-  manifest.json     # MV3; matches/host_permissions: https://*.youtube.com/* + https://7tv.io/*
+  manifest.json     # MV3; matches/host_permissions: youtube + 7tv.io + github.com + objects.githubusercontent.com
   emotes.json       # emote custom: [["sangroll","images/sangroll.avif"], ...]
-  icons/ images/ popup/{popup.html,popup.css}
+  icons/ images/ popup/{popup.html,popup.css} update/{update.html}
 build.mjs  bump-version.ps1  dist/
 ```
 
@@ -52,7 +55,7 @@ build.mjs  bump-version.ps1  dist/
 - Node text chứa `\u200b` bỏ qua khi quét emote (chống re-process).
 
 ## 5. Kiểm thử
-- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 24 test, load `dist\content\content.js`. Phải pass 24/24 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 10, popup-update 12, popup-hider 10, command-hider 13...).
+- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 24 test, load `dist\content\content.js`. Phải pass 24/24 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 15, popup-update 16, popup-hider 10, command-hider 13, zip-parser 8, update-page 11...).
 - Kiểm thử tay: load `dist/` vào Chrome → reload extension → **F5 trang** (SPA giữ content script cũ — nguyên nhân nhiễu khi debug).
 
 ## 6. Quy ước code

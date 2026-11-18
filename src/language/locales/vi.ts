@@ -16,6 +16,7 @@ export const vi: Dict = {
   popupNewUpdate: "Cập nhật mới!!!",
   popupHelloUser: "Xin chào @{user}",
   popupDevBuild: "dev-build",
+  popupUpdateAction: "Cập nhật",
   popupEmoteHqWarn: "Đang chạy emoji 2x — đang cache 4x, xong sẽ tự chuyển.",
   popupModPoll: "Mod có thể tạo cuộc bầu chọn (“!poll”)",
   popupBotList: "Ẩn bot (cách nhau bằng dấu phẩy)",
@@ -38,6 +39,22 @@ export const vi: Dict = {
   popupStatCache: "Dung lượng cache",
   popupStatEta: "còn khoảng {s}",
   popupStatEmotes: "emote",
+
+  // Self-updater page
+  updateChecking: "Đang kiểm tra bản mới…",
+  updateReady: "Có bản mới {v}.",
+  updateBtn: "Cập nhật ngay",
+  updateUptodate: "Bạn đang dùng bản mới nhất.",
+  updateNoPicker: "Trang này không mở được hộp thoại chọn thư mục (hãy dùng Chrome).",
+  updateNoPermission: "Quyền truy cập thư mục bị từ chối.",
+  updateWrongFolder: "Thư mục này không phải thư mục extension (thiếu manifest.json).",
+  updateDownloading: "Đang tải bản {v}…",
+  updateUnpacking: "Đang giải nén…",
+  updateInvalidZip: "Bản tải về không khớp với bản phát hành.",
+  updateWriting: "Đang ghi file…",
+  updateDone: "Đã cài {v}! Mở lại (F5) các tab YouTube để dùng bản mới.",
+  updateFailed: "Cập nhật lỗi: {detail}",
+  updateRetry: "Thử lại",
 
   // Roles
   roleOwner: "Chủ kênh",

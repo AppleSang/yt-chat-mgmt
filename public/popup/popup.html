@@ -22,8 +22,10 @@
           <span data-i18n="popupSettingsCard">Settings</span>
           <!-- Update badge: hidden until the release check resolves (equal
                version -> "Hello @user" when the handle is known; older ->
-               pulsing link; newer -> dev tag). -->
+               pulsing link; newer -> dev tag). When older, the button opens
+               the self-updater page instead of the releases list. -->
           <a id="updateBadge" class="update-badge" target="_blank" rel="noopener noreferrer" hidden></a>
+          <button id="updateAction" type="button" class="btn btn-secondary update-action" data-i18n="popupUpdateAction" hidden>Update</button>
         </div>
 
         <!-- Command hider + cleanup share one row: hiding is the base

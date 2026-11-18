@@ -86,4 +86,12 @@
 ## F13. Popup chào khi đã cập nhật — `popup.ts`
 1. `checkUpdate` so version local vs release GitHub: **bằng nhau** → state `ok` → badge hiện "Xin chào @user" (`popupHelloUser`, class `update-hello`, không link) với handle đọc từ `chrome.storage.local.ownHandle`; không có handle → ẩn badge.
 2. Có bản mới → vàng "New Update!!! x.y.z" (link releases); dev-build → tím "dev-build" — giữ nguyên như cũ.
-3. Test: `popup-update-test.cjs` (12 case).
+3. Test: `popup-update-test.cjs` (16 case, gồm nút Cập nhật của F14).
+
+## F14. Tự cập nhật từ GitHub (self-updater) — `src/update/`
+1. **Popup**: state "có bản mới" → hiện nút **Cập nhật** (`popupUpdateAction`) cạnh badge → `chrome.tabs.create` mở `update/update.html` (luồng update sống độc lập với popup).
+2. **Trang update** (`update.ts`): fetch `releases/latest` (asset khớp `yt-chat-mgmt-vX.zip`); version local ≥ release → "đang dùng bản mới nhất"; cũ hơn → nút "Cập nhật ngay". API lỗi → `updateFailed` + nút "Thử lại" (chạy lại check).
+3. **Luồng 1 click**: `ensureDir` (handle `File System Access` — lưu IndexedDB `ytccc-updater/handles/extDir` 1 lần; xin lại quyền trong click; handle hỏng/thiếu `manifest.json` → bỏ, báo `updateWrongFolder`, retry mở picker lại) → tải zip → `parseZip` (`zip.ts`: EOCD + central directory, method 0/8 qua `DecompressionStream('deflate-raw')`, bỏ thư mục/`./`-prefix/zip-slip `..`) → **xác minh version manifest trong zip == release** → ghi file (tạo thư mục con, `manifest.json` ghi cuối làm marker) → `chrome.runtime.reload()`. Lỗi giữa chừng → `updateFailed` + "Thử lại" (retry đúng release).
+4. **Giới hạn MV3**: không thực thi code từ mạng — bản mới chỉ chạy sau khi ghi xong + reload; tab YouTube cần F5. Chrome không cho extension tự ghi thư mục của nó — nên có bước chọn thư mục 1 lần duy nhất.
+5. **build.mjs**: entry `src/update/update.ts → dist/update/update.js` + copy `public/update/`. Manifest thêm host_permissions `github.com` + `objects.githubusercontent.com` (tải asset không vướng CORS).
+6. Test: `zip-parser-test.cjs` (8 case — store/deflate, chuẩn hoá tên, zip-slip, extra local↔central lệch, method lạ, input rác, interop Compress-Archive) + `update-page-test.cjs` (11 case — ready/uptodate/dev/api-fail/retry/click-không-picker).

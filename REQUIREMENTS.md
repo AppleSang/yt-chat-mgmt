@@ -73,8 +73,18 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 - R12.1. Khi version popup **== release mới nhất trên GitHub**, badge cập nhật hiện "**Xin chào @user**" (`popupHelloUser` — en: "Hello @user") thay vì trống; dùng handle từ `ownHandle`, không phải link.
 - R12.2. Trạng thái khác giữ nguyên: có bản mới → badge vàng "New Update!!! x.y.z" (link releases); dev-build → badge tím "dev-build"; không dò được handle ở trạng thái hello → ẩn badge.
 
-## R13. Kỹ thuật bắt buộc
-- Build qua `node build.mjs` (typecheck tsc + esbuild + copy static). Mọi thay đổi phải build sạch.
-- Test harness jsdom (`ytccc-test/test.js`) phải pass 16/16.
-- Bump version mỗi bộ thay đổi (bump-version.ps1) + ghi CHANGELOG.md.
+## R13. Popup chào khi đã cập nhật — xem R12 (đã đánh lại số; R13 cũ = hiện tại R12)
+
+## R14. Tự cập nhật từ GitHub (self-updater)
+- R14.1. Khi badge ở trạng thái "có bản mới", popup hiện **nút Cập nhật** (`popupUpdateAction`) cạnh badge → mở trang `update/update.html` trong tab mới (popup đóng không làm chết luồng update).
+- R14.2. Trang update: so sánh version manifest ↔ release mới nhất (`releases/latest`); **bằng hoặc mới hơn** → thông báo "đang dùng bản mới nhất" và dừng; **cũ hơn** → hiện nút "Cập nhật ngay".
+- R14.3. Luồng cập nhật (1 click): lấy handle thư mục cài đặt (`File System Access` — handle lưu IndexedDB `ytccc-updater/handles/extDir`, chọn 1 lần; quyền hết hạn → xin lại trong click; handle hỏng → bỏ và yêu cầu chọn lại; thư mục không chứa `manifest.json` → báo lỗi) → tải asset zip `yt-chat-mgmt-vX.zip` từ release (host_permissions `github.com` + `objects.githubusercontent.com`) → giải nén bằng parser riêng (`src/update/zip.ts`, `DecompressionStream`, không thư viện ngoài; **bỏ** entry thư mục, tên `./`-prefix, và mọi path zip-slip `..`) → **xác minh `manifest.json` trong zip có version == release** → ghi đè file vào thư mục (tạo thư mục con; `manifest.json` ghi **cuối cùng** như marker hoàn tất) → `chrome.runtime.reload()` tự khởi động lại.
+- R14.4. MV3 **cấm thực thi code tải từ mạng** — không eval/fetch-exec; bản mới chỉ "chạy" sau khi file đã ghi xong + reload. Tab YouTube đang mở cần F5 để content script mới vào lại.
+- R14.5. Lỗi ở bất kỳ bước nào → hiển thị `updateFailed` + chi tiết, nút chuyển thành "Thử lại" (retry cùng release; API fail → retry chạy lại toàn bộ check); KHÔNG ghi đè thư mục bằng archive không khớp release.
+- R14.6. Cài lần đầu/lần đầu sau tính năng: không có nút tự cập nhật trong bản cũ — phải cập nhật tay đúng 1 lần nữa để có nút.
+
+## R15. Kỹ thuật bắt buộc
+- Build qua `node build.mjs` (typecheck tsc + esbuild + copy static; tự bump version). Mọi thay đổi phải build sạch.
+- Test suite jsdom phải pass trọn bộ (harness 24/24 + các test cận cảnh trong `Temp\opencode`).
+- Bump version mỗi bộ thay đổi + ghi CHANGELOG.md.
 - Không gây vòng lặp mutation observer (đã từng gây treo + RAM tăng — xem CHANGELOG 1.0.63/64).

@@ -14,6 +14,7 @@ export const en = {
   popupNewUpdate: "New Update!!!",
   popupHelloUser: "Hello @{user}",
   popupDevBuild: "dev-build",
+  popupUpdateAction: "Update",
   popupEmoteHqWarn: "Running 2x emoji — caching 4x, switches automatically when done.",
   popupModPoll: "Mods can create polls (\"!poll\")",
   popupBotList: "Hide bots (comma separated)",
@@ -36,6 +37,22 @@ export const en = {
   popupStatCache: "Cache size",
   popupStatEta: "about {s} left",
   popupStatEmotes: "emotes",
+
+  // Self-updater page
+  updateChecking: "Checking for updates…",
+  updateReady: "Version {v} is available.",
+  updateBtn: "Update now",
+  updateUptodate: "You already have the latest version.",
+  updateNoPicker: "This page cannot open a folder picker here (use Chrome).",
+  updateNoPermission: "Folder access was denied.",
+  updateWrongFolder: "That folder is not the extension folder (manifest.json is missing).",
+  updateDownloading: "Downloading {v}…",
+  updateUnpacking: "Unpacking…",
+  updateInvalidZip: "The downloaded archive does not match the release.",
+  updateWriting: "Writing files…",
+  updateDone: "Installed {v}! Reload your YouTube tabs (F5) to load the new version.",
+  updateFailed: "Update failed: {detail}",
+  updateRetry: "Try again",
 
   // Roles
   roleOwner: "Owner",

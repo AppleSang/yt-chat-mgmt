@@ -44,7 +44,8 @@ const entries = [
   { in: "src/background/index.ts", out: "background.js" },
   { in: "src/content/inject.ts", out: "content/inject.js" },
   { in: "src/content/index.ts", out: "content/content.js" },
-  { in: "src/popup/popup.ts", out: "popup/popup.js" }
+  { in: "src/popup/popup.ts", out: "popup/popup.js" },
+  { in: "src/update/update.ts", out: "update/update.js" }
 ];
 
 const buildAll = () => {
@@ -69,6 +70,7 @@ const buildAll = () => {
   copyDir(path.join(root, "public", "images"), path.join(dist, "images"));
   copyDir(path.join(root, "public", "icons"), path.join(dist, "icons"));
   copyDir(path.join(root, "public", "popup"), path.join(dist, "popup"));
+  copyDir(path.join(root, "public", "update"), path.join(dist, "update"));
 
   console.log("build ok -> dist/");
 };
