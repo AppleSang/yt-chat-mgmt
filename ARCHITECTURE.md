@@ -35,7 +35,7 @@ src/
     update.ts       # trang tự cập nhật: fetch release → zip.ts → ghi thư mục → reload (F14)
     zip.ts          # zip parser (EOCD + central dir, DecompressionStream, zip-slip guard)
 public/
-  manifest.json     # MV3; matches/host_permissions: youtube + 7tv.io + github.com + objects.githubusercontent.com
+  manifest.json     # MV3; matches/host_permissions: youtube + 7tv.io + github.com + objects.githubusercontent.com; key cố định → ID ổn định qua các lần cài lại
   emotes.json       # emote custom: [["sangroll","images/sangroll.avif"], ...]
   icons/ images/ popup/{popup.html,popup.css} update/{update.html}
 build.mjs  bump-version.ps1  dist/
@@ -55,7 +55,7 @@ build.mjs  bump-version.ps1  dist/
 - Node text chứa `\u200b` bỏ qua khi quét emote (chống re-process).
 
 ## 5. Kiểm thử
-- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 24 test, load `dist\content\content.js`. Phải pass 24/24 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 15, popup-update 16, popup-hider 10, command-hider 13, zip-parser 8, update-page 11...).
+- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 24 test, load `dist\content\content.js`. Phải pass 24/24 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 15, popup-update 16, popup-hider 10, command-hider 13, zip-parser 8, update-page 19...).
 - Kiểm thử tay: load `dist/` vào Chrome → reload extension → **F5 trang** (SPA giữ content script cũ — nguyên nhân nhiễu khi debug).
 
 ## 6. Quy ước code

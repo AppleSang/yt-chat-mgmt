@@ -2,6 +2,12 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.124
+- **Updater page: a zip-drag install path** - Chrome unpacks a zip dragged onto `chrome://extensions` into `<profile>\User Data\...\UnpackedExtensions\<zipname>_XXXXXX`, and the File System Access API is hard-blocked (`kBlockAllChildren`) on the whole User Data / AppData\Local tree (verified in the Chromium source + a Chrome 150/2026 security study), so the folder flow can never work for that install type. The updater page now also shows a **"Download the new .zip"** link with instructions: download, open chrome://extensions, **remove the old copy**, then drag the zip onto that page. Removing the old copy is mandatory because every drag unpacks into a fresh random-suffixed folder, hence a new extension ID - dragging on top leaves two copies running side by side (verified by the user: two same-name extensions with different IDs).
+- Cancelling the folder picker now reports "Folder pick was cancelled." instead of a raw `AbortError` string.
+- **Pinned manifest key**: a fixed `"key"` (RSA 2048) makes every install (zip-drag or folder) use **the same extension ID forever**; previously each zip re-drag produced a new ID, orphaning settings (stored per ID in `storage.sync`). Trade-off: existing installs change ID once when moving to 1.0.124 (they had to reinstall anyway to get the new build).
+- Verified: build auto-bumped 1.0.123 → 1.0.124; update-page 19/19 (8 new cases: zip link + hint shown with the right href on the new-release state, kept after a failure, hidden when up to date / asset missing, picker cancel → friendly message + retry + fallback intact); harness 24/24; mention 15/15; alt-delete 37/37; popup-update 16/16; popup-hider 10/10; command-hider 13/13; banner 12/12; dock 18/18; zip-parser 8/8; pollcmd/cache/picker ALL PASSED.
+
 ## 1.0.123
 Aggregated release of everything since v1.0.102 (full details: the 1.0.122, 1.0.119 and 1.0.117 sections below):
 

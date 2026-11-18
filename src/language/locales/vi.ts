@@ -55,6 +55,10 @@ export const vi: Dict = {
   updateDone: "Đã cài {v}! Mở lại (F5) các tab YouTube để dùng bản mới.",
   updateFailed: "Cập nhật lỗi: {detail}",
   updateRetry: "Thử lại",
+  updatePickCancelled: "Đã hủy chọn thư mục.",
+  updateZipBtn: "Tải bản mới (.zip)",
+  updateZipHint:
+    "Nếu bạn cài bằng cách kéo zip: tải file ở trên, mở chrome://extensions, xóa bản cũ rồi kéo file zip vào trang.",
 
   // Roles
   roleOwner: "Chủ kênh",

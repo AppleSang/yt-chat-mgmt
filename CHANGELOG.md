@@ -2,6 +2,12 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.124
+- **Trang cập nhật: thêm đường cập nhật cho người cài bằng kéo-zip** — Chrome giải nén zip kéo vào `chrome://extensions` vào `<profile>\User Data\...\UnpackedExtensions\<tên zip>_XXXXXX`, và File System Access bị Chrome chặn cứng (`kBlockAllChildren`) trên toàn bộ User Data/AppData\Local (xác minh từ Chromium source + nghiên cứu bảo mật Chrome 150/2026) → luồng chọn thư mục không thể hoạt động với cách cài này. Trang cập nhật giờ hiện thêm link **"Tải bản mới (.zip)"** kèm hướng dẫn: tải file → mở chrome://extensions → **xóa bản cũ** → kéo zip vào trang. Bắt buộc xóa bản cũ vì mỗi lần kéo zip Chrome tạo thư mục có hậu tố random mới → ID extension khác → kéo chồng sẽ thành 2 bản chạy song song (người dùng đã tự kiểm chứng thực tế: 2 extension cùng tên, ID khác nhau).
+- Hủy hộp thoại chọn thư mục giờ báo "Đã hủy chọn thư mục." thay vì lộ text `AbortError` thô.
+- **Key cố định trong manifest**: thêm trường `"key"` (RSA 2048) → mọi bản cài (kéo-zip lẫn thư mục) dùng **cùng một extension ID mãi mãi**; trước đây mỗi lần kéo lại zip sinh ID mới nên cài đặt (lưu theo ID trong `storage.sync`) dễ bị mồ côi. Đổi lại: bản cài cũ đổi ID một lần khi lên 1.0.124 (phải cài lại 1 lần — vốn đã phải làm để nhận bản mới).
+- Kiểm chứng: build tự bump 1.0.123 → 1.0.124; update-page 19/19 (thêm 8 case: link zip hiện đúng href/hint ở state có bản mới, giữ nguyên sau lỗi, ẩn ở state mới nhất/thiếu asset, hủy picker → thông báo thân thiện + retry + fallback còn nguyên); harness 24/24; mention 15/15; alt-delete 37/37; popup-update 16/16; popup-hider 10/10; command-hider 13/13; banner 12/12; dock 18/18; zip-parser 8/8; pollcmd/cache/picker ALL PASSED.
+
 ## 1.0.123
 Bản phát hành gộp mọi thay đổi kể từ v1.0.102 (chi tiết đầy đủ: các mục 1.0.122, 1.0.119, 1.0.117 bên dưới):
 

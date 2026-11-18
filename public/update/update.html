@@ -51,6 +51,25 @@
     #action:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
     #action[disabled] { opacity: 0.5; cursor: default; }
     #action[hidden] { display: none; }
+    /* Zip-drag installs live inside Chrome's profile, which the File System
+       Access API refuses to open - the manual download is their update path. */
+    .zip-link {
+      display: inline-block;
+      margin-top: 14px;
+      color: var(--ink-subtle);
+      font-size: 13px;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .zip-link:hover { color: var(--ink); }
+    .zip-link[hidden] { display: none; }
+    .zip-hint {
+      margin: 10px 0 0;
+      color: var(--ink-subtle);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .zip-hint[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -59,6 +78,8 @@
     <h1>yt-chat-mgmt</h1>
     <p id="status" data-i18n="updateChecking"></p>
     <button type="button" id="action" hidden></button>
+    <a id="zipLink" class="zip-link" href="#" data-i18n="updateZipBtn" hidden></a>
+    <p id="zipHint" class="zip-hint" data-i18n="updateZipHint" hidden></p>
   </main>
   <script src="update.js"></script>
 </body>

@@ -82,6 +82,7 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 - R14.4. MV3 **cấm thực thi code tải từ mạng** — không eval/fetch-exec; bản mới chỉ "chạy" sau khi file đã ghi xong + reload. Tab YouTube đang mở cần F5 để content script mới vào lại.
 - R14.5. Lỗi ở bất kỳ bước nào → hiển thị `updateFailed` + chi tiết, nút chuyển thành "Thử lại" (retry cùng release; API fail → retry chạy lại toàn bộ check); KHÔNG ghi đè thư mục bằng archive không khớp release.
 - R14.6. Cài lần đầu/lần đầu sau tính năng: không có nút tự cập nhật trong bản cũ — phải cập nhật tay đúng 1 lần nữa để có nút.
+- R14.7. **Người cài bằng kéo-zip** (`chrome://extensions`): Chrome giải nén vào thư mục con của profile, bị FSA blocklist chặn cứng → luồng chọn thư mục không dùng được. Trang update phải hiện thêm link **"Tải bản mới (.zip)"** + hướng dẫn *(tải file → chrome://extensions → xóa bản cũ → kéo zip vào)* ở trạng thái có bản mới và giữ nó khi luồng thư mục lỗi; bắt buộc nhắc **xóa bản cũ** vì mỗi lần kéo zip là một ID mới (kéo chồng = 2 bản chạy song song). Hủy picker → thông báo `updatePickCancelled` (không lộ `AbortError` thô).
 
 ## R15. Kỹ thuật bắt buộc
 - Build qua `node build.mjs` (typecheck tsc + esbuild + copy static; tự bump version). Mọi thay đổi phải build sạch.

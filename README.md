@@ -26,6 +26,15 @@ Tiếng Việt: [README.vi.md](README.vi.md)
 3. Turn on **Developer mode** (top right).
 4. Drag & drop the extension zip file into the browser. Done!
 
+## 🔄 Update 🔄
+
+The popup shows a **New Update** badge when a newer release exists; the **Update** button opens the updater page.
+
+- **Installed by dragging the zip** (the steps above): click **Download the new .zip** on the updater page, open `chrome://extensions`, **remove the old copy**, then drag the downloaded zip onto that page. Removing first is required — dragging a new zip on top of an installed copy leaves two copies running side by side.
+- **Installed as an unpacked folder**: click **Update now**, pick the extension folder once — the updater writes the new files itself and reloads the extension.
+
+Reload your YouTube tabs (F5) after updating.
+
 ## Credits
 
 - [7TV](https://7tv.app) — emote data from the public 7tv.io API, CDN images and the 7TV logo.

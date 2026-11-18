@@ -49,9 +49,20 @@ const applyI18n = (): void => {
 
 const statusEl = document.getElementById("status") as HTMLElement;
 const actionEl = document.getElementById("action") as HTMLButtonElement;
+const zipLinkEl = document.getElementById("zipLink") as HTMLAnchorElement;
+const zipHintEl = document.getElementById("zipHint") as HTMLElement;
 
 const setStatus = (msg: string): void => {
   statusEl.textContent = msg;
+};
+
+// Zip-drag installs are unpacked into Chrome's own profile folder, which the
+// File System Access API hard-blocks, so the folder flow can never succeed
+// there. The release zip stays available as a manual path for those users.
+const showZipFallback = (rel: ReleaseInfo): void => {
+  zipLinkEl.href = rel.assetUrl;
+  zipLinkEl.hidden = false;
+  zipHintEl.hidden = false;
 };
 
 interface ReleaseInfo {
@@ -141,7 +152,16 @@ const ensureDir = async (): Promise<DirHandle> => {
   if (typeof window.showDirectoryPicker !== "function") {
     throw new Error(t("updateNoPicker"));
   }
-  const dir = await window.showDirectoryPicker({ mode: "readwrite" });
+  let dir: DirHandle;
+  try {
+    dir = await window.showDirectoryPicker({ mode: "readwrite" });
+  } catch (e) {
+    // Closing the picker is the expected outcome for zip-drag installs
+    // (the install folder is unreachable), so name it instead of leaking
+    // the raw AbortError text.
+    const cancelled = e instanceof DOMException && e.name === "AbortError";
+    throw new Error(t(cancelled ? "updatePickCancelled" : "updateNoPermission"));
+  }
   const perm = dir.requestPermission
     ? await dir.requestPermission({ mode: "readwrite" })
     : "granted";
@@ -226,6 +246,8 @@ const bindAction = (label: string, fn: () => void): void => {
 
 const run = async (): Promise<void> => {
   actionEl.hidden = true;
+  zipLinkEl.hidden = true;
+  zipHintEl.hidden = true;
   currentAction = null;
   setStatus(t("updateChecking"));
   let rel: ReleaseInfo | null = null;
@@ -242,6 +264,7 @@ const run = async (): Promise<void> => {
     return;
   }
   setStatus(t("updateReady", { v: rel.version }));
+  showZipFallback(rel);
   bindAction(t("updateBtn"), () => rel && void performUpdate(rel));
 };
 

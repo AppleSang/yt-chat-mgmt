@@ -53,6 +53,10 @@ export const en = {
   updateDone: "Installed {v}! Reload your YouTube tabs (F5) to load the new version.",
   updateFailed: "Update failed: {detail}",
   updateRetry: "Try again",
+  updatePickCancelled: "Folder pick was cancelled.",
+  updateZipBtn: "Download the new .zip",
+  updateZipHint:
+    "If you installed by dragging the zip: download the file above, open chrome://extensions, remove the old copy, then drag the zip onto that page.",
 
   // Roles
   roleOwner: "Owner",
