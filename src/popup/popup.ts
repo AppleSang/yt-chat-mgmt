@@ -174,6 +174,11 @@ const initLanguageSelect = (): void => {
 // extra host permission.
 const RELEASES_URL = "https://github.com/AppleSang/yt-chat-mgmt/releases";
 
+// Temporarily hidden at the owner's request: the badge still links to the
+// Releases page, so the popup stays a plain release shortcut. Flip this to
+// true to bring the in-popup self-updater button back.
+const SHOW_UPDATE_ACTION = false;
+
 let updateState: "new" | "dev" | "ok" | null = null;
 let updateVersion = "";
 let helloHandle = "";
@@ -193,7 +198,7 @@ const compareVersions = (a: number[], b: number[]): number => {
 const renderUpdateBadge = (): void => {
   const badge = els.updateBadge;
   // The self-updater button only makes sense when a newer release exists.
-  els.updateAction.hidden = updateState !== "new";
+  els.updateAction.hidden = !SHOW_UPDATE_ACTION || updateState !== "new";
   if (!updateState) {
     badge.hidden = true;
     return;

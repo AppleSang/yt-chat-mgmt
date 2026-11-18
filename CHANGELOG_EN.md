@@ -2,6 +2,10 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.125
+- **Update button temporarily hidden on the popup** - at the owner's request the `#updateAction` button sits behind `SHOW_UPDATE_ACTION = false` (in `popup.ts`); the **"New Update!!! x.y.z"** badge is unchanged and still links to the Releases page for manual zip downloads. The updater page and its whole infrastructure (F14) are untouched, only the popup entry point is missing - flip the flag to `true` to bring it back with no other changes.
+- Verified: build auto-bumped 1.0.124 → 1.0.125; popup-update 16/16 (2 cases changed: the button is hidden in every state while the flag is off; the wiring still opens the updater page); update-page 19/19; harness 24/24; mention 15/15; alt-delete 37/37; popup-hider 10/10; command-hider 13/13; banner 12/12; dock 18/18; zip-parser 8/8; pollcmd/cache/picker ALL PASSED.
+
 ## 1.0.124
 - **Updater page: a zip-drag install path** - Chrome unpacks a zip dragged onto `chrome://extensions` into `<profile>\User Data\...\UnpackedExtensions\<zipname>_XXXXXX`, and the File System Access API is hard-blocked (`kBlockAllChildren`) on the whole User Data / AppData\Local tree (verified in the Chromium source + a Chrome 150/2026 security study), so the folder flow can never work for that install type. The updater page now also shows a **"Download the new .zip"** link with instructions: download, open chrome://extensions, **remove the old copy**, then drag the zip onto that page. Removing the old copy is mandatory because every drag unpacks into a fresh random-suffixed folder, hence a new extension ID - dragging on top leaves two copies running side by side (verified by the user: two same-name extensions with different IDs).
 - Cancelling the folder picker now reports "Folder pick was cancelled." instead of a raw `AbortError` string.

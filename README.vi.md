@@ -28,10 +28,10 @@ English: [README.md](README.md)
 
 ## 🔄 Cập nhật 🔄
 
-Popup hiện badge **có bản mới** khi có bản phát hành mới; nút **Cập nhật** mở trang cập nhật.
+Khi có bản mới, popup hiện badge **có bản mới** dẫn tới trang Releases.
 
-- **Cài bằng kéo zip** (theo hướng dẫn trên): bấm **Tải bản mới (.zip)** trên trang cập nhật, mở `chrome://extensions`, **xóa bản cũ**, rồi kéo file zip vừa tải vào trang. Bắt buộc xóa trước — kéo zip mới chồng lên bản đang cài sẽ thành 2 bản chạy song song.
-- **Cài bằng thư mục unpacked**: bấm **Cập nhật ngay**, chọn thư mục extension 1 lần — trang cập nhật tự ghi file mới và khởi động lại extension.
+- **Cài bằng kéo zip** (theo hướng dẫn trên): tải file .zip mới nhất từ trang Releases, mở `chrome://extensions`, **xóa bản cũ**, rồi kéo file zip vừa tải vào trang. Bắt buộc xóa trước — kéo zip mới chồng lên bản đang cài sẽ thành 2 bản chạy song song.
+- **Cài bằng thư mục unpacked**: thay nội dung thư mục extension bằng bản mới (giữ nguyên đường dẫn thư mục), rồi bấm Reload trên card extension.
 
 Sau khi cập nhật, mở lại (F5) các tab YouTube.
 

@@ -28,10 +28,10 @@ Tiếng Việt: [README.vi.md](README.vi.md)
 
 ## 🔄 Update 🔄
 
-The popup shows a **New Update** badge when a newer release exists; the **Update** button opens the updater page.
+When a newer release is out, the popup shows a **New Update** badge that links to the Releases page.
 
-- **Installed by dragging the zip** (the steps above): click **Download the new .zip** on the updater page, open `chrome://extensions`, **remove the old copy**, then drag the downloaded zip onto that page. Removing first is required — dragging a new zip on top of an installed copy leaves two copies running side by side.
-- **Installed as an unpacked folder**: click **Update now**, pick the extension folder once — the updater writes the new files itself and reloads the extension.
+- **Installed by dragging the zip** (the steps above): download the latest .zip from the Releases page, open `chrome://extensions`, **remove the old copy**, then drag the downloaded zip onto that page. Removing first is required — dragging a new zip on top of an installed copy leaves two copies running side by side.
+- **Installed as an unpacked folder**: replace the folder contents with the new release (keep the same folder path), then hit Reload on the extension card.
 
 Reload your YouTube tabs (F5) after updating.
 

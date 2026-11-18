@@ -2,6 +2,10 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.125
+- **Tạm ẩn nút Cập nhật trên popup** — theo yêu cầu chủ dự án: nút `#updateAction` ẩn sau cờ `SHOW_UPDATE_ACTION = false` (trong `popup.ts`); badge **"New Update!!! x.y.z"** giữ nguyên và vẫn link tới trang Releases để tải zip thủ công. Trang tự cập nhật + toàn bộ hạ tầng (F14) không đổi, chỉ mất lối vào từ popup — đổi cờ thành `true` là hiện lại, không cần sửa gì khác.
+- Kiểm chứng: build tự bump 1.0.124 → 1.0.125; popup-update 16/16 (đổi 2 case: nút ẩn ở mọi state khi cờ tắt; wiring mở đúng trang update vẫn nguyên); update-page 19/19; harness 24/24; mention 15/15; alt-delete 37/37; popup-hider 10/10; command-hider 13/13; banner 12/12; dock 18/18; zip-parser 8/8; pollcmd/cache/picker ALL PASSED.
+
 ## 1.0.124
 - **Trang cập nhật: thêm đường cập nhật cho người cài bằng kéo-zip** — Chrome giải nén zip kéo vào `chrome://extensions` vào `<profile>\User Data\...\UnpackedExtensions\<tên zip>_XXXXXX`, và File System Access bị Chrome chặn cứng (`kBlockAllChildren`) trên toàn bộ User Data/AppData\Local (xác minh từ Chromium source + nghiên cứu bảo mật Chrome 150/2026) → luồng chọn thư mục không thể hoạt động với cách cài này. Trang cập nhật giờ hiện thêm link **"Tải bản mới (.zip)"** kèm hướng dẫn: tải file → mở chrome://extensions → **xóa bản cũ** → kéo zip vào trang. Bắt buộc xóa bản cũ vì mỗi lần kéo zip Chrome tạo thư mục có hậu tố random mới → ID extension khác → kéo chồng sẽ thành 2 bản chạy song song (người dùng đã tự kiểm chứng thực tế: 2 extension cùng tên, ID khác nhau).
 - Hủy hộp thoại chọn thư mục giờ báo "Đã hủy chọn thư mục." thay vì lộ text `AbortError` thô.
