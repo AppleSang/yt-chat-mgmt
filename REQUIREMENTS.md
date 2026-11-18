@@ -64,9 +64,9 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 - R10.5. Nếu `modPoll` tắt, `!poll` được coi như lệnh thường (chỉ dọn, không tạo poll).
 
 ## R11. Highlight tên chính mình trong chat
-- R11.1. Extension **tự dò handle** của viewer từ menu guide trang chính (mục "Kênh của bạn" — `#section-items > ytd-guide-entry-renderer:first-child a[href^="/@"]`, fallback `#guide-links-primary`); iframe chat (không có guide) nhận handle qua `chrome.storage.local.ownHandle` ghi bởi trang chính + listener onChanged.
-- R11.2. Mọi text trong `#message` chứa handle (kèm hoặc không kèm `@`) được bọc `span.ytccc-self-mention` — biên từ an toàn: không wrap khi dính chữ/`@` hai bên (VD `x@handle`), giữ nguyên chip `#mention` native của YouTube.
-- R11.3. Chip tự dựng **mimic chip mention của YouTube**: copy `background`/`color` từ một chip `#mention` thật khi gặp (một lần), fallback nền sáng mờ + chữ trắng.
+- R11.1. Extension **tự dò handle** của viewer, ưu tiên nguồn: (1) menu guide trang chính (mục "Kênh của bạn" — `#section-items > ytd-guide-entry-renderer:first-child a[href^="/@"]`, fallback `#guide-links-primary`; chỉ tồn tại ở home/drawer mở — trang watch không có guide); (2) **nguồn thụ động** trên mọi trang chính: khi viewer tự mở menu tài khoản, nhặt link "Xem kênh của bạn"/"Your channel" trong `ytd-popup-container` (chỉ tin link có text khớp marker — không đọc menu kênh người khác, không click hộ). Iframe chat (không có guide) nhận handle qua `chrome.storage.local.ownHandle` ghi bởi trang chính + listener onChanged.
+- R11.2. Mọi text trong `#message` chứa handle (kèm hoặc không kèm `@`) được bọc `span.ytccc-self-mention` — biên từ an toàn: không wrap khi dính chữ/`@` hai bên (VD `x@handle`), giữ nguyên chip mention native của YouTube (dạng cũ `#mention` lẫn dạng mới `span.mention` không id, kể cả khi node có delimiter U+200B mà YouTube chèn sau chip).
+- R11.3. Chip tự dựng **mimic chip mention của YouTube**: copy `background`/`color` từ một chip thật khi gặp (`#mention` hoặc `span.mention`, VD nền đỏ `rgb(136,39,18)`), fallback nền sáng mờ + chữ trắng.
 - R11.4. Idempotent: sweep 3s + sweep khi handle mới về (`sweepMentions`) không wrap lặp; không mutate khi pattern không match (chống vòng lặp mutation).
 
 ## R12. Popup chào khi đã cập nhật

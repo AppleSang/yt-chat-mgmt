@@ -77,11 +77,11 @@
 5. Test: `alt-delete-test.cjs` (37 case — không nudge/stamper, synth chỉ dòng lệnh, native press + confirm, chain, flash, pinned, no-Alt).
 
 ## F12. Highlight tên chính mình (self-mention) — `mention.ts`
-1. **Dò handle**: trang chính đọc menu guide (mục "Kênh của bạn" — `#section-items > ytd-guide-entry-renderer:first-child a[href^="/@"]`, fallback `#guide-links-primary`; thử 12 lần × 300ms) → ghi `chrome.storage.local.ownHandle`. Iframe chat đọc storage lúc boot + onChanged (guide chỉ tồn tại ở trang chính).
-2. **Wrap**: mọi text node trong `#message` chứa handle (kèm/không `@`, biên từ an toàn) → bọc `span.ytccc-self-mention` giữ nguyên text gốc; bỏ qua chip `#mention` native, wrap cũ, node chứa `\u200b`, chữ dính (`x@handle`).
-3. **Style**: `#ytccc-mention-style` dùng biến `--ytccc-mention-bg/fg`; `syncMentionStyle` copy computed style từ một chip `#mention` thật một lần khi gặp.
+1. **Dò handle** (trang chính, `!isChatFrame`): (a) menu guide — mục "Kênh của bạn" (`#section-items > ytd-guide-entry-renderer:first-child a[href^="/@"]`, fallback `#guide-links-primary`; thử 12 lần × 300ms — chỉ có ở home/drawer mở, trang watch không có); (b) **nguồn thụ động** — MutationObserver trên `ytd-popup-container`: khi viewer tự mở menu tài khoản, nhặt link có text "Xem kênh của bạn"/"Your channel" (`a[href^="/@"]`) — chỉ tin text khớp marker, không đọc menu kênh người khác. Kết quả ghi `chrome.storage.local.ownHandle`. Iframe chat đọc storage lúc boot + onChanged.
+2. **Wrap**: mọi text node trong `#message` chứa handle (kèm/không `@`, biên từ an toàn) → bọc `span.ytccc-self-mention` giữ nguyên text gốc; bỏ qua chip mention native (dạng `#mention` lẫn `span.mention` không id), wrap cũ, span poll ẩn, chữ dính (`x@handle`). KHÔNG guard ZWSP — YouTube chèn delimiter U+200B trước text sau chip, node đó phải vẫn được highlight.
+3. **Style**: `#ytccc-mention-style` dùng biến `--ytccc-mention-bg/fg`; `syncMentionStyle` copy computed style từ một chip thật (`#mention` hoặc `span.mention` — nền đỏ `rgb(136,39,18)` trên theme tối) một lần khi gặp.
 4. **Chạy khi**: boot + sweep 3s (emoteSweep) + `sweepMentions` ngay khi handle về (storage cb/onChanged) — idempotent, không mutate khi pattern không match (chống vòng mutation).
-5. Test: `mention-test.cjs` (10 case — wrap @/plain, chip native nguyên, idempotent, dò guide ghi storage).
+5. Test: `mention-test.cjs` (12 case — wrap @/plain, chip native nguyên vẹn cả 2 dạng, ZWSP delimiter, idempotent, dò guide ghi storage).
 
 ## F13. Popup chào khi đã cập nhật — `popup.ts`
 1. `checkUpdate` so version local vs release GitHub: **bằng nhau** → state `ok` → badge hiện "Xin chào @user" (`popupHelloUser`, class `update-hello`, không link) với handle đọc từ `chrome.storage.local.ownHandle`; không có handle → ẩn badge.

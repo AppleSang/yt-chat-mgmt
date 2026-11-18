@@ -83,6 +83,7 @@ export const initMention = (): void => {
 };
 
 export const startHandleDetect = (): void => {
+  watchAccountMenu();
   if (detectTimer !== null || ownHandle) return;
   let tries = 0;
   const tick = (): void => {
@@ -110,6 +111,50 @@ export const startHandleDetect = (): void => {
   tick();
 };
 
+// Watch pages render no guide at all, so the guide probe above never fires
+// there. Passive fallback: when the viewer opens their own account menu the
+// "View your channel" link lands in ytd-popup-container - only links whose
+// text matches that marker are trusted, so menus over other channels are
+// never read. Purely read-only observation, no clicks, no DOM mutation.
+const CHANNEL_LINK_RE = /^(xem kênh của bạn|your channel|view your channel)$/i;
+let menuWatcher: MutationObserver | null = null;
+
+const watchAccountMenu = (): void => {
+  if (menuWatcher || ownHandle) return;
+  try {
+    const pop = document.querySelector("ytd-popup-container");
+    if (!pop || typeof MutationObserver !== "function") return;
+    const scan = (): void => {
+      if (ownHandle) {
+        if (menuWatcher) {
+          menuWatcher.disconnect();
+          menuWatcher = null;
+        }
+        return;
+      }
+      const a = pop.querySelector<HTMLAnchorElement>("a[href^='/@']");
+      const href = a && a.getAttribute("href");
+      const text = ((a && a.textContent) || "").trim();
+      if (!href || !CHANNEL_LINK_RE.test(text)) return;
+      const m = href.match(HANDLE_RE);
+      if (!m) return;
+      ownHandle = m[1];
+      try {
+        chrome.storage.local.set({ ownHandle });
+      } catch (e) {
+        /* storage optional in tests */
+      }
+      sweepMentions();
+      log("own handle detected from account menu:", ownHandle);
+    };
+    menuWatcher = new MutationObserver(scan);
+    menuWatcher.observe(pop, { childList: true, subtree: true });
+    scan();
+  } catch (e) {
+    /* menu source optional */
+  }
+};
+
 // ---------- highlight ---------------------------------------------------------
 // Mirrors YouTube's mention chip: copies background/color from a real #mention
 // chip when one exists, otherwise falls back to a neutral dark-theme chip.
@@ -128,7 +173,9 @@ let styleSynced = false;
 const syncMentionStyle = (): void => {
   if (styleSynced) return;
   try {
-    const chip = document.querySelector("#message #mention");
+    // YouTube renamed the chip: older DOMs use #mention, current ones a
+    // plain <span class="mention"> without any id (verified live).
+    const chip = document.querySelector("#message #mention, #message span.mention");
     if (!chip) return;
     const cs = window.getComputedStyle(chip);
     document.documentElement.style.setProperty("--ytccc-mention-bg", cs.backgroundColor);
@@ -162,10 +209,17 @@ const mentionPattern = (): RegExp =>
 const wrapTargets = (node: Text): boolean => {
   const parent = node.parentElement;
   if (!parent || !parent.matches) return false;
-  // Skip YouTube's own mention chips, our previous wraps and emote artifacts.
-  if (parent.matches("#mention") || parent.closest(".ytccc-self-mention")) return false;
+  // Skip YouTube's own mention chips (span.mention carries no id anymore),
+  // our previous wraps and the hidden poll-text spans.
+  if (parent.closest("#mention, span.mention, [data-ytccc-poll-src], .ytccc-self-mention")) {
+    return false;
+  }
+  // The ZWSP guard was dropped on purpose: YouTube renders a U+200B
+  // delimiter right before the text that follows a mention chip, and that
+  // node must still highlight. Emote artifacts live in the input field and
+  // poll spans only, both already excluded above.
   const val = node.nodeValue || "";
-  if (!val || val.includes("\u200b")) return false;
+  if (!val) return false;
   return val.toLowerCase().includes(ownHandle.toLowerCase());
 };
 

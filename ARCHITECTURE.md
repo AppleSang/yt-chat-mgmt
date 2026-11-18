@@ -21,7 +21,7 @@ src/
     index.ts        # boot + observers + sweeps (điểm vào content script)
     config.ts       # DEFAULTS, loadConfig, watchConfig, isBot
     commands.ts     # detect/hide/xoá lệnh qua moderate API, deletedLog, revealHiddenMessages, Alt+click (synth trash), confirm dialog tự bấm
-    mention.ts      # highlight tên chính mình: dò handle từ guide, wrap chip .ytccc-self-mention (F12)
+    mention.ts      # highlight tên chính mình: dò handle từ guide/account menu, wrap chip .ytccc-self-mention (F12)
     dom.ts          # MESSAGE_SELECTOR, applyBadges (badge+avatar), ROLE_COLORS
     toast.ts        # toast trong vùng chat
     curtain.ts      # auto live chat switch (overlay + icon128)
