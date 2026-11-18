@@ -81,7 +81,7 @@
 2. **Wrap**: mọi text node trong `#message` chứa handle (kèm/không `@`, biên từ an toàn) → bọc `span.ytccc-self-mention` giữ nguyên text gốc; bỏ qua chip mention native (dạng `#mention` lẫn `span.mention` không id), wrap cũ, span poll ẩn, chữ dính (`x@handle`). KHÔNG guard ZWSP — YouTube chèn delimiter U+200B trước text sau chip, node đó phải vẫn được highlight.
 3. **Style**: `#ytccc-mention-style` dùng biến `--ytccc-mention-bg/fg`; `syncMentionStyle` copy computed style từ một chip thật (`#mention` hoặc `span.mention` — nền đỏ `rgb(136,39,18)` trên theme tối) một lần khi gặp.
 4. **Chạy khi**: boot + sweep 3s (emoteSweep) + `sweepMentions` ngay khi handle về (storage cb/onChanged) — idempotent, không mutate khi pattern không match (chống vòng mutation).
-5. Test: `mention-test.cjs` (12 case — wrap @/plain, chip native nguyên vẹn cả 2 dạng, ZWSP delimiter, idempotent, dò guide ghi storage).
+5. Test: `mention-test.cjs` (15 case — wrap @/plain, chip native nguyên vẹn cả 2 dạng, ZWSP delimiter, idempotent, dò guide ghi storage, fallback menu tài khoản: từ chối link lạ, ghi handle khi mở menu, ngắt observer sau khi ghi).
 
 ## F13. Popup chào khi đã cập nhật — `popup.ts`
 1. `checkUpdate` so version local vs release GitHub: **bằng nhau** → state `ok` → badge hiện "Xin chào @user" (`popupHelloUser`, class `update-hello`, không link) với handle đọc từ `chrome.storage.local.ownHandle`; không có handle → ẩn badge.
