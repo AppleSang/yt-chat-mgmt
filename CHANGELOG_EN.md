@@ -2,6 +2,13 @@
 
 Tiếng Việt: [CHANGELOG.md](CHANGELOG.md)
 
+## 1.0.126
+- **Every incoming message is hidden until the decision is made** (ends the chat jitter): a row that enters the DOM gets `data-ytccc-pending` + `display:none!important` CSS right in the MutationObserver microtask (before paint); once author + body have arrived, `processMessage` decides synchronously - bots/commands stay hidden, everything else drops the pending flag and appears. Empty shells (Polymer stamps author/message in a later task) stay pending instead of showing un-decided; a 2s fallback decides on its own if the content never lands.
+- **Bot toasts render emotes + highlight the handle**: the toast body reuses the emote walker (custom + 7TV; links skipped) and the self-mention walker (`@NotRealSang` and `NotRealSang`, styled exactly like the chat chip); links inside the toast stay intact.
+- **Scroll jitter fixed at the root**: pending rows are now hidden with an inline `display:none` too (independent of stylesheet timing), so an undecided row never owns layout; any row that already had layout when hidden (late decisions/legacy) collapses over 160ms ease-out instead of snapping - the scroller clamps smoothly instead of jumping a whole row in one frame; honors `prefers-reduced-motion`.
+- Command hiding is still synchronous before any await (`!poll`/`deletedLog`/params wait/API run in the background); late author/message stamps are re-decided via the observer's mutation branch.
+- Verified: build auto-bumped 1.0.125 → 1.0.126; harness 32/32 (new: pending uses inline display:none, late bot pending too; a new message stays pending until its content arrives, then appears; a late-filled bot is pending from the start; a bot toast renders an emote + highlights the @handle); command-hider 13/13; mention 15/15; alt-delete 37/37; popup-update 16/16; popup-hider 10/10; banner 12/12; dock 18/18; zip-parser 8/8; update-page 19/19; pollcmd/cache/picker ALL PASSED.
+
 ## 1.0.125
 - **Update button temporarily hidden on the popup** - at the owner's request the `#updateAction` button sits behind `SHOW_UPDATE_ACTION = false` (in `popup.ts`); the **"New Update!!! x.y.z"** badge is unchanged and still links to the Releases page for manual zip downloads. The updater page and its whole infrastructure (F14) are untouched, only the popup entry point is missing - flip the flag to `true` to bring it back with no other changes.
 - Verified: build auto-bumped 1.0.124 → 1.0.125; popup-update 16/16 (2 cases changed: the button is hidden in every state while the flag is off; the wiring still opens the updater page); update-page 19/19; harness 24/24; mention 15/15; alt-delete 37/37; popup-hider 10/10; command-hider 13/13; banner 12/12; dock 18/18; zip-parser 8/8; pollcmd/cache/picker ALL PASSED.

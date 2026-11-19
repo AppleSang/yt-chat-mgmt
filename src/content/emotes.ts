@@ -494,31 +494,16 @@ const swapRenderedEmoteSrc = (): void => {
   });
 };
 
-export const applyEmotes = (el: HTMLElement): void => {
-  // Chat messages wrap their text in #message; comment / community-post
-  // bodies ARE the #content-text element themselves; poll cards process
-  // their entire text content.
-  let message: HTMLElement | null;
-  if (el.matches("#content-text")) message = el;
-  else if (el.matches(POLL_SELECTOR)) message = el;
-  else if (el.matches("#message")) message = el;
-  else message = el.querySelector("#message");
-  if (!message || !emotePattern) return;
-  // Poll summary ("viewer engagement") messages: only the question title
-  // line (bold span) gets emotes — answer lines ("label (12%)") and the
-  // ended footer stay plain text.
-  const engagement = !!message.closest(
-    "yt-live-chat-viewer-engagement-message-renderer"
-  );
-
-  const walker = document.createTreeWalker(message, NodeFilter.SHOW_TEXT);
+const replaceEmoteTextNodes = (
+  root: HTMLElement,
+  accept?: (node: Text) => boolean
+): void => {
+  if (!emotePattern) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const targets: Text[] = [];
   while (walker.nextNode()) {
     const node = walker.currentNode as Text;
-    if (engagement) {
-      const p = node.parentElement;
-      if (!p || !p.matches || !p.matches('[style-target="bold"]')) continue;
-    }
+    if (accept && !accept(node)) continue;
     const val = node.nodeValue || "";
     // Hidden text (\u200b) next to rendered emotes must be skipped to avoid
     // re-processing loops on every sweep (freeze cause with many emotes).
@@ -567,6 +552,42 @@ export const applyEmotes = (el: HTMLElement): void => {
     }
     node.parentNode!.replaceChild(frag, node);
   }
+};
+
+export const applyEmotes = (el: HTMLElement): void => {
+  // Chat messages wrap their text in #message; comment / community-post
+  // bodies ARE the #content-text element themselves; poll cards process
+  // their entire text content.
+  let message: HTMLElement | null;
+  if (el.matches("#content-text")) message = el;
+  else if (el.matches(POLL_SELECTOR)) message = el;
+  else if (el.matches("#message")) message = el;
+  else message = el.querySelector("#message");
+  if (!message) return;
+  // Poll summary ("viewer engagement") messages: only the question title
+  // line (bold span) gets emotes — answer lines ("label (12%)") and the
+  // ended footer stay plain text.
+  const engagement = !!message.closest(
+    "yt-live-chat-viewer-engagement-message-renderer"
+  );
+  replaceEmoteTextNodes(
+    message,
+    engagement
+      ? (node) => {
+          const p = node.parentElement;
+          return !!(p && p.matches && p.matches('[style-target="bold"]'));
+        }
+      : undefined
+  );
+};
+
+// Emotes inside our own UI (bot toast bodies). Link labels are skipped so
+// an emote keyword inside a URL never breaks the anchor text.
+export const applyEmotesToElement = (root: HTMLElement): void => {
+  replaceEmoteTextNodes(root, (node) => {
+    const p = node.parentElement;
+    return !(p && p.closest && p.closest("a"));
+  });
 };
 
 // Poll cards are re-rendered/restored by YouTube constantly, so processing

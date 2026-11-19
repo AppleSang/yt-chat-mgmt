@@ -8,13 +8,15 @@
    - Nếu text bắt đầu bằng prefix `!` → là tin lệnh; gắn tag `data-ytccc-command` cho Alt+click (kể cả khi cleaner tắt).
    - **Hai tay config**: `enabled` (**Ẩn lệnh** / Command hider — công tắc gốc) và `commandDelete` (**Dọn lệnh** / Command cleanup — tay xoá, chỉ có tác dụng khi hider bật). Hider tắt → tay xoá bị **ép TẮT trong storage** (popup ghi `commandDelete: false` khi load lẫn khi tắt), bật lại hider thì tay xoá xuất phát từ TẮT. Cặp toggle ẩn/hiện qua `#commandDeletePair` + guard `.opt-pair[hidden] { display: none }` (author `display:flex` đè luật UA `[hidden]` — bug 1.0.112 đã sửa trong 1.0.113).
    - `commandDelete` false → **chỉ ẩn local** (`hideLocally`): không gọi API/menu, không toast, không ghi `deletedLog`; `!poll` vẫn được tạo nếu `modPoll` bật (tạo poll ≠ xoá tin).
+   - **Mặc định ẩn tới khi quyết định xong (1.0.126)**: tin vừa vào DOM bị gắn `data-ytccc-pending` + ẩn bằng cả inline `display:none` (không phụ thuộc stylesheet/timing) ngay trong microtask observer (trước paint); `processMessage` quyết định đồng bộ khi đủ author + nội dung — bot/lệnh giữ ẩn, tin thường gỡ pending để hiện. Dòng vỏ rỗng chờ nội dung (fallback 2s); author/message đến muộn được quyết định lại qua nhánh mutation. Việc ẩn lệnh xảy ra trước mọi await (`!poll`/ghi log/chờ params/API chạy nền) → không lóe. Dòng lỡ có layout khi bị ẩn (quyết định muộn/legacy) collapse 160ms ease-out thay vì snap — scroller clamp mượt, tôn trọng `prefers-reduced-motion`.
    - `commandDelete` true → **xoá không đụng menu 3 chấm**: ưu tiên bấm nút thùng rác native (`data.inlineActionButtons` server gửi cho mod) — YouTube mở hộp xác nhận → tự bấm nút confirm ngay khi dialog render (poll 60ms/1.2s; kẹt sau 500ms → ESC), không có nút thì gọi `deleteViaApi` (POST youtubei moderate, SAPISIDHASH) bằng params đã scrape (`waitForParams`, tối đa 2500ms) → luôn ẩn local; thành công → toast "Đã dọn: ..." + ghi `deletedLog`; thiếu cả hai đường → ẩn im lặng.
 4. Toggle `enabled` tắt → `revealHiddenMessages()` khôi phục mọi tin đã ẩn (dọn lệnh tắt hẳn thì không ẩn gì mới).
 
 ## F2. Ẩn bot + toast — `commands.ts` + `toast.ts`
 1. Config botList → mảng tên (bỏ @, lowercase).
-2. Tin mới có tác giả khớp → ẩn local.
+2. Tin mới có tác giả khớp → ẩn local đồng bộ ngay khi phát hiện (trước paint; row đang pending từ lúc chèn nên không lóe); observer gọi lại `processMessage` khi author/message đến muộn nên dòng điền muộn cũng bị ẩn kịp (1.0.126).
 3. Nếu `botToastSeconds > 0` → toast (avatar, tên, role, text) trong N giây; 0 = không toast.
+4. Thân toast render emote keyword thành ảnh (`applyEmotesToElement` — custom + 7TV, bỏ qua link) và highlight handle của chính mình (`applyMentionToElement` — `@handle`/`handle`); link trong toast giữ nguyên (1.0.126).
 
 ## F3. Ẩn badge/avatar — `dom.ts`
 - `applyBadges(el)` chạy cho từng tin nhắn (observer) + sweep: set `display:none` theo `hideBadges`/`hideAvatars`.
@@ -28,6 +30,7 @@
    - Thay keyword bằng `<img>` CDN.
 4. Poll: `applyPollEmotes(card)` — binding-safe state machine: legacy img không mark bị xoá; poll kết thúc (text có `(n%)`) → unwrap text gốc + xoá img; canonical check (không mutate khi mọi keyword đã là emote, node text nằm trong span ẩn bị bỏ qua); convert chỉ nhắm node text thô: label 1 keyword → **giữ nguyên text node** (bọc span ẩn — Polymer cập nhật tại chỗ) + chèn img trước span; text trộn nhiều keyword → thay fragment (giữ keyword trong span ẩn). Node text trùng YouTube append thêm cạnh cặp [img][span] sẵn có → **bỏ (dedup)**. Card tổng kết poll (`yt-live-chat-viewer-engagement-message-renderer`): chỉ dòng tiêu đề câu hỏi (span `style-target="bold"`) được render emote, các dòng câu trả lời + footer giữ text thuần; `#message` cũng được xử lý khi nhận trực tiếp element này.
 5. Chu kỳ xử lý: observer (tin nhắn tức thời; poll debounce 150ms, bỏ qua batch chứa artifact của mình) + sweep 3s (gồm `#message` engagement) + sweep khi emote load xong (`ytccc-emotes-loaded`) + sweep 300ms khi đổi settings.
+6. **Toast (1.0.126)**: `applyEmotesToElement(bodyEl)` render keyword emote (custom + 7TV) trong thân toast; text trong link (`a`) bị bỏ qua để không phá nhãn URL.
 
 ## F5. Soạn tin có emote — `suggest.ts`
 1. Gõ `|abc` → picker gợi ý (móc scenario: Tab/Enter chèn + dấu cách; ArrowUp/Down điều hướng; Esc đóng).
@@ -82,6 +85,7 @@
 3. **Style**: `#ytccc-mention-style` dùng biến `--ytccc-mention-bg/fg`; `syncMentionStyle` copy computed style từ một chip thật (`#mention` hoặc `span.mention` — nền đỏ `rgb(136,39,18)` trên theme tối) một lần khi gặp.
 4. **Chạy khi**: boot + sweep 3s (emoteSweep) + `sweepMentions` ngay khi handle về (storage cb/onChanged) — idempotent, không mutate khi pattern không match (chống vòng mutation).
 5. Test: `mention-test.cjs` (15 case — wrap @/plain, chip native nguyên vẹn cả 2 dạng, ZWSP delimiter, idempotent, dò guide ghi storage, fallback menu tài khoản: từ chối link lạ, ghi handle khi mở menu, ngắt observer sau khi ghi).
+6. **Toast (1.0.126)**: thân toast dùng chung walker (`applyMentionToElement`) → handle được highlight cả trong toast; text trong link (`a`) bị bỏ qua nên nhãn URL không bị chèn span.
 
 ## F13. Popup chào khi đã cập nhật — `popup.ts`
 1. `checkUpdate` so version local vs release GitHub: **bằng nhau** → state `ok` → badge hiện "Xin chào @user" (`popupHelloUser`, class `update-hello`, không link) với handle đọc từ `chrome.storage.local.ownHandle`; không có handle → ẩn badge.

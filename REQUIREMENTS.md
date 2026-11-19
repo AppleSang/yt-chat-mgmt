@@ -11,12 +11,14 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 - R1.6. `commandDelete = false` (Ẩn lệnh vẫn bật): tin lệnh chỉ bị **ẩn local** — không gọi API, không thử xoá, không toast, không ghi log; dòng vẫn tag `data-ytccc-command` để Alt+click xoá thủ công; `!poll` vẫn tạo bình chọn nếu modPoll bật (tạo poll ≠ xoá tin).
 - R1.7. Khi `enabled = false`: các module khác (emote, badge, bot...) **vẫn hoạt động**; các tin đã ẩn được khôi phục (`revealHiddenMessages`); tay xoá bị ép tắt theo R1.2.
 - R1.8. Mỗi lần dọn thành công → toast "Đã dọn: <nội dung>" và ghi vào log popup.
+- R1.9. (1.0.126) Mọi tin vừa vào khung chat bị **ẩn mặc định** (`data-ytccc-pending` + inline `display:none`, kèm CSS dự phòng) ngay trong microtask observer — trước paint — và chỉ hiện khi đã quyết định xong: đủ author + nội dung → bot/lệnh giữ ẩn, tin khác gỡ pending; dòng vỏ rỗng chờ nội dung (fallback 2s). Không bao giờ hiện non rồi mới ẩn. Dòng lỡ đã có layout khi bị ẩn được collapse 160ms ease-out (tôn trọng `prefers-reduced-motion`) để scroller không nhảy cả hàng tin trong 1 frame.
 
 ## R2. Ẩn tin bot + toast
 - R2.1. Danh sách bot cấu hình được (mặc định `@nightbot, @streamelements, @streamlabs`), phân tách bằng dấu phẩy/chấm phẩy/xuống dòng, bỏ `@`, so sánh lowercase.
 - R2.2. Tin của bot bị ẩn khỏi khung chat.
 - R2.3. Toast thông báo bot chat: slider **0–35 giây**; `0` = tắt hoàn toàn (hiển thị "Tắt"/"Off"), không tick khi 0.
 - R2.4. Toast gồm avatar, tên, role-tag, nội dung tin.
+- R2.5. (1.0.126) Thân toast render emote keyword (custom + 7TV) thành ảnh và highlight handle của chính mình (`@handle`/`handle`, span `.ytccc-self-mention`); text trong link toast giữ nguyên.
 
 ## R3. Ẩn trang trí
 - R3.1. `hideBadges`: ẩn huy hiệu (#author-badges, author-badge-renderer, #chip-badges).
@@ -86,6 +88,6 @@ Extension Chrome MV3 quản lý livestream chat YouTube trên `www.youtube.com` 
 
 ## R15. Kỹ thuật bắt buộc
 - Build qua `node build.mjs` (typecheck tsc + esbuild + copy static; tự bump version). Mọi thay đổi phải build sạch.
-- Test suite jsdom phải pass trọn bộ (harness 24/24 + các test cận cảnh trong `Temp\opencode`).
+- Test suite jsdom phải pass trọn bộ (harness 32/32 + các test cận cảnh trong `Temp\opencode`).
 - Bump version mỗi bộ thay đổi + ghi CHANGELOG.md.
 - Không gây vòng lặp mutation observer (đã từng gây treo + RAM tăng — xem CHANGELOG 1.0.63/64).

@@ -11,7 +11,51 @@ const MODERATE_URL =
 const CREATE_POLL_URL =
   "https://www.youtube.com/youtubei/v1/live_chat/create_poll?prettyPrint=false";
 
-const processed = new WeakSet<HTMLElement>();
+// Every chat row is hidden the instant it enters the DOM (data-ytccc-pending
+// + CSS) and only revealed once we know it is not a bot/command. Decisions
+// run synchronously inside the observer microtask, so a filtered row never
+// paints - not even one frame - while the slower deletedLog/params/API work
+// runs in the background afterwards.
+const ensurePendingStyle = (): void => {
+  if (document.getElementById("ytccc-pending-style")) return;
+  const style = document.createElement("style");
+  style.id = "ytccc-pending-style";
+  style.textContent =
+    MESSAGE_SELECTOR.split(",")
+      .map((s) => `${s.trim()}[data-ytccc-pending]`)
+      .join(", ") + "{display:none!important;}";
+  (document.head || document.documentElement).appendChild(style);
+};
+
+export const markPending = (el: HTMLElement): void => {
+  // Pinned copies are protected by design (moderation skips banners).
+  if (el.closest("yt-live-chat-banner-manager")) return;
+  if (el.dataset.ytcccPending || el.dataset.ytcccDecided) return;
+  ensurePendingStyle();
+  el.dataset.ytcccPending = "1";
+  // Belt and braces: the inline hide survives a missing/late stylesheet or
+  // YouTube re-parenting the row, so an undecided row can never own layout
+  // (a row that takes space and is hidden a frame later makes the chat
+  // scroller clamp and jerks the whole list).
+  el.style.display = "none";
+  // Safety net for renderer variants whose content never lands: decide with
+  // whatever exists instead of leaving the row hidden forever.
+  window.setTimeout(() => processMessage(el, true), 2000);
+};
+
+// A pending row can only be revealed once author + body have arrived:
+// Polymer may stamp them in a later task, and revealing early would let a
+// bot/command row slip through. An entirely empty shell stays pending.
+const isReadyToDecide = (el: HTMLElement): boolean => {
+  const authorEl = qsOne(el, "#author-name") as HTMLElement | null;
+  const author = (authorEl?.textContent || "").trim();
+  const msgEl = qsOne(el, "#message") as HTMLElement | null;
+  const msgReady =
+    !msgEl || !!((msgEl.textContent || "").trim() || msgEl.childNodes.length);
+  if (authorEl) return !!author && msgReady;
+  if (msgEl) return msgReady;
+  return false;
+};
 
 // YouTube truncates long link labels to "https://.../94833..." and wraps the
 // real target in a /redirect href whose `q` param holds it URL-encoded, so
@@ -49,13 +93,69 @@ const isCommand = (text: string): boolean => {
 };
 
 const hideLocally = (el: HTMLElement): void => {
-  el.style.display = "none";
+  cancelHideAnimation(el);
+  // Rows that still own layout (late decisions, legacy rows) are collapsed
+  // over a few frames instead of snapping to display:none. The chat scroller
+  // clamps continuously while the height shrinks, which glides the list
+  // instead of making it jump a whole row.
+  const canAnimate =
+    el.isConnected &&
+    el.offsetHeight > 0 &&
+    typeof el.animate === "function" &&
+    !prefersReducedMotion();
+  if (canAnimate) {
+    const height = el.offsetHeight;
+    el.style.overflow = "hidden";
+    const anim = el.animate(
+      [
+        { height: `${height}px`, opacity: 1 },
+        { height: "0px", opacity: 0 }
+      ],
+      { duration: 160, easing: "ease-out" }
+    );
+    hideAnimations.set(el, anim);
+    anim.onfinish = () => {
+      hideAnimations.delete(el);
+      el.style.display = "none";
+      el.style.height = "";
+      el.style.opacity = "";
+      el.style.overflow = "";
+    };
+    anim.oncancel = () => {
+      hideAnimations.delete(el);
+      el.style.height = "";
+      el.style.opacity = "";
+      el.style.overflow = "";
+    };
+  } else {
+    el.style.display = "none";
+  }
   hiddenMessages.add(el);
   if (hiddenMessages.size > 500) pruneHidden();
 };
 
+const prefersReducedMotion = (): boolean => {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch (e) {
+    return false;
+  }
+};
+
 // Messages hidden by us so they can be restored when cleanup is disabled.
 const hiddenMessages = new Set<HTMLElement>();
+
+const hideAnimations = new WeakMap<HTMLElement, Animation>();
+
+const cancelHideAnimation = (el: HTMLElement): void => {
+  const anim = hideAnimations.get(el);
+  if (!anim) return;
+  hideAnimations.delete(el);
+  anim.cancel();
+  el.style.height = "";
+  el.style.opacity = "";
+  el.style.overflow = "";
+};
 
 const pruneHidden = (): void => {
   for (const el of hiddenMessages) {
@@ -65,7 +165,10 @@ const pruneHidden = (): void => {
 
 export const revealHiddenMessages = (): void => {
   for (const el of hiddenMessages) {
-    if (el.isConnected) el.style.display = "";
+    if (el.isConnected) {
+      cancelHideAnimation(el);
+      el.style.display = "";
+    }
     hiddenMessages.delete(el);
   }
 };
@@ -457,22 +560,90 @@ const handlePollCommand = async (
   });
 };
 
-export const processMessage = async (el: HTMLElement): Promise<void> => {
-  if (processed.has(el)) return;
+// The row is already hidden, so a late author stamp cannot flash; wait a
+// moment for it so toasts/deletedLog get the real name instead of the
+// placeholder.
+const waitForAuthor = async (
+  el: HTMLElement,
+  fallback: string,
+  timeoutMs = 1200
+): Promise<string> => {
+  if (fallback) return fallback;
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const a = (qsOne(el, "#author-name") as HTMLElement | null)?.textContent?.trim();
+    if (a) return a;
+    await sleep(120);
+  }
+  return t("unknownAuthor");
+};
+
+const runCommandWorkflow = async (
+  el: HTMLElement,
+  text: string,
+  authorHint: string,
+  avatar: string | null,
+  role: ChatRole
+): Promise<void> => {
+  const author = await waitForAuthor(el, authorHint);
+
+  // "!poll": create the poll first (owner's credentials), then let the
+  // mode below deal with the command message itself.
+  await handlePollCommand(el, text, author, avatar);
+
+  // Hide-only arm (Command cleanup off): nothing is deleted, no toast, no
+  // deleted-log entry - the row was hidden before this workflow started.
+  if (!config.commandDelete) return;
+
+  await logMessage(author, text, role, avatar);
+
+  // Delete without the 3-dot dance: press the native inline trash when the
+  // server stamped it (the confirm dialog is auto-handled below), otherwise
+  // the silent moderate API with the scraped params. No context-menu
+  // simulation anywhere.
+  const trash = findInlineTrash(el);
+  if (trash) {
+    trash.click();
+    watchConfirmDialog();
+    return;
+  }
+  const params = await waitForParams(el);
+  let ok = false;
+  if (params) ok = await deleteViaApi(el, params);
+  if (ok) {
+    showToast({
+      title: author,
+      body: t("cleanedPrefix", { text: text.slice(0, 60) }),
+      avatar,
+      role
+    });
+  } else {
+    log("could not delete - hidden silently:", author);
+  }
+};
+
+export const processMessage = (el: HTMLElement, force = false): void => {
   // Pinned copies (inside yt-live-chat-banner-manager) render the SAME
   // message renderer inside the pinned strip. Hiding a bot there would
   // blank a message the channel owner explicitly pinned, so moderation
   // (bot hiding + command cleanup + Alt delete) skips banner copies
   // entirely — the visual passes (badges/emotes) still run on them.
-  if (el.closest("yt-live-chat-banner-manager")) return;
+  if (el.closest("yt-live-chat-banner-manager")) {
+    delete el.dataset.ytcccPending;
+    el.style.display = "";
+    return;
+  }
+  if (el.dataset.ytcccDecided) return;
+  if (!el.dataset.ytcccPending) markPending(el);
   const text = getMessageText(el);
   const author =
-    ((qsOne(el, "#author-name") as HTMLElement | null)?.textContent?.trim()) ||
-    t("unknownAuthor");
+    ((qsOne(el, "#author-name") as HTMLElement | null)?.textContent?.trim()) || "";
+
   // Bot hiding is its own feature and runs regardless of the cleanup
   // switch — the toast duration (botToastSeconds) is its only setting.
-  if (isBot(author)) {
-    processed.add(el);
+  if (author && isBot(author)) {
+    delete el.dataset.ytcccPending;
+    el.dataset.ytcccDecided = "1";
     log("hide bot:", author);
     hideLocally(el);
     if ((config.botToastSeconds || 0) > 0) {
@@ -493,54 +664,28 @@ export const processMessage = async (el: HTMLElement): Promise<void> => {
   // enabled check so manually deleting "!" spam with Alt+click works while
   // the auto cleaner is switched off.
   if (isCommand(text)) el.dataset.ytcccCommand = "1";
-  if (!config.enabled) return;
-  if (!isCommand(text)) return;
-  // Always attempt to delete (own/mod messages included). If deletion is
-  // not permitted the message is hidden silently with no toast.
-  processed.add(el);
+  const command = isCommand(text);
+  // Author/body not stamped yet (Polymer can fill them in a later task):
+  // keep the row hidden instead of revealing it before the decision.
+  if (!command && !force && !isReadyToDecide(el)) return;
+
+  delete el.dataset.ytcccPending;
+  el.dataset.ytcccDecided = "1";
+  if (!command || !config.enabled) {
+    // Ordinary row (or cleanup off): drop the pending inline hide, which is
+    // what keeps undecided rows out of layout.
+    el.style.display = "";
+    return;
+  }
+
+  // Already hidden above; the native trash can still be clicked
+  // programmatically on a display:none row.
+  hideLocally(el);
 
   const avatar = getAvatarUrl(el);
   const role = getRole(el);
-  log("command detected:", author, ":", text.slice(0, 60));
-
-  // "!poll": create the poll first (owner's credentials), then let the
-  // mode below deal with the command message itself.
-  await handlePollCommand(el, text, author, avatar);
-
-  // Hide-only arm (Command cleanup off): the message vanishes from view,
-  // nothing is deleted, no toast, no deleted-log entry.
-  if (!config.commandDelete) {
-    hideLocally(el);
-    return;
-  }
-
-  await logMessage(author, text, role, avatar);
-
-  // Delete without the 3-dot dance: press the native inline trash when the
-  // server stamped it (the confirm dialog is auto-handled below), otherwise
-  // the silent moderate API with the scraped params. No context-menu
-  // simulation anywhere.
-  const trash = findInlineTrash(el);
-  if (trash) {
-    trash.click();
-    watchConfirmDialog();
-    hideLocally(el);
-    return;
-  }
-  const params = await waitForParams(el);
-  let ok = false;
-  if (params) ok = await deleteViaApi(el, params);
-  hideLocally(el);
-  if (ok) {
-    showToast({
-      title: author,
-      body: t("cleanedPrefix", { text: text.slice(0, 60) }),
-      avatar,
-      role
-    });
-  } else {
-    log("could not delete - hidden silently:", author);
-  }
+  log("command detected:", author || t("unknownAuthor"), ":", text.slice(0, 60));
+  void runCommandWorkflow(el, text, author, avatar, role);
 };
 
 // --- Alt+click quick delete --------------------------------------------------

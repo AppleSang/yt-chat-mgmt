@@ -2,6 +2,13 @@
 
 English: [CHANGELOG_EN.md](CHANGELOG_EN.md)
 
+## 1.0.126
+- **Mọi tin mới mặc định bị ẩn cho tới khi quyết định xong** (dứt điểm giật khung chat): tin vừa vào DOM được gắn `data-ytccc-pending` + CSS `display:none!important` ngay trong microtask của MutationObserver (trước paint); khi đã đủ author + nội dung, `processMessage` quyết định đồng bộ — bot/lệnh giữ ẩn, còn lại gỡ pending để hiện. Dòng vỏ rỗng (Polymer điền author/message ở task sau) tiếp tục pending thay vì hiện non; fallback 2s tự quyết nếu nội dung không bao giờ tới.
+- **Toast bot render emote + highlight handle**: thân toast dùng chung walker emote (custom + 7TV; bỏ qua link) và walker self-mention (`@NotRealSang` lẫn `NotRealSang`, style y hệt chip trong chat); link trong toast giữ nguyên.
+- **Chống giật scroll triệt để**: pending giờ ẩn bằng cả inline `display:none` (không phụ thuộc stylesheet/timing) nên dòng chưa quyết định không bao giờ chiếm layout; dòng nào lỡ đã có layout khi bị ẩn (quyết định muộn/legacy) được collapse 160ms ease-out thay vì snap — scroller clamp mượt, không còn cú nhảy cả hàng tin trong 1 frame; tôn trọng `prefers-reduced-motion`.
+- Ẩn lệnh vẫn đồng bộ trước mọi await (`!poll`/ghi `deletedLog`/chờ params/API chạy nền); author/message đến muộn vẫn được quyết định lại qua nhánh mutation.
+- Kiểm chứng: build tự bump 1.0.125 → 1.0.126; harness 32/32 (thêm: pending ẩn bằng inline display:none, bot điền muộn cũng pending inline; tin mới pending tới khi đủ nội dung, đủ author → tin thường tự hiện; bot điền muộn pending ngay từ đầu; toast bot render emote + highlight @handle); command-hider 13/13; mention 15/15; alt-delete 37/37; popup-update 16/16; popup-hider 10/10; banner 12/12; dock 18/18; zip-parser 8/8; update-page 19/19; pollcmd/cache/picker ALL PASSED.
+
 ## 1.0.125
 - **Tạm ẩn nút Cập nhật trên popup** — theo yêu cầu chủ dự án: nút `#updateAction` ẩn sau cờ `SHOW_UPDATE_ACTION = false` (trong `popup.ts`); badge **"New Update!!! x.y.z"** giữ nguyên và vẫn link tới trang Releases để tải zip thủ công. Trang tự cập nhật + toàn bộ hạ tầng (F14) không đổi, chỉ mất lối vào từ popup — đổi cờ thành `true` là hiện lại, không cần sửa gì khác.
 - Kiểm chứng: build tự bump 1.0.124 → 1.0.125; popup-update 16/16 (đổi 2 case: nút ẩn ở mọi state khi cờ tắt; wiring mở đúng trang update vẫn nguyên); update-page 19/19; harness 24/24; mention 15/15; alt-delete 37/37; popup-hider 10/10; command-hider 13/13; banner 12/12; dock 18/18; zip-parser 8/8; pollcmd/cache/picker ALL PASSED.

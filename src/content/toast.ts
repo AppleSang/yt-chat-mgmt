@@ -2,6 +2,8 @@ import { t } from "../language/i18n";
 import type { ToastOptions } from "../language/types";
 import { config, onToastPositionChange } from "./config";
 import { ROLE_COLORS } from "./dom";
+import { applyEmotesToElement } from "./emotes";
+import { applyMentionToElement } from "./mention";
 
 const injectToastStyles = (): void => {
   if (document.getElementById("ytccc-toast-styles")) return;
@@ -211,6 +213,10 @@ export const showToast = (opts: ToastOptions): void => {
     if (lastIdx < (body || "").length) {
       bodyEl.appendChild(document.createTextNode(body.slice(lastIdx)));
     }
+    // Toasts mirror the chat: known emote keywords render as images and the
+    // viewer's own handle gets the mention highlight (links stay untouched).
+    applyEmotesToElement(bodyEl);
+    applyMentionToElement(bodyEl);
     content.appendChild(titleEl);
     content.appendChild(bodyEl);
     toast.appendChild(content);

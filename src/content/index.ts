@@ -1,6 +1,7 @@
 import { loadConfig, watchConfig } from "./config";
 import {
   MESSAGE_SELECTOR,
+  markPending,
   processMessage,
   revealHiddenMessages,
   initPollParams,
@@ -64,8 +65,9 @@ const handleAddedNode = (node: Node): void => {
     scheduleBannerApply();
   }
   if (el.matches && el.matches(MESSAGE_SELECTOR)) {
+    markPending(el);
     applyBadges(el);
-    void processMessage(el);
+    processMessage(el);
     applyEmotes(el);
     applyMention(el);
   }
@@ -75,8 +77,9 @@ const handleAddedNode = (node: Node): void => {
   if (el.querySelectorAll) {
     el.querySelectorAll(MESSAGE_SELECTOR).forEach((child) => {
       const msg = child as HTMLElement;
+      markPending(msg);
       applyBadges(msg);
-      void processMessage(msg);
+      processMessage(msg);
       applyEmotes(msg);
       applyMention(msg);
     });
@@ -93,8 +96,9 @@ const handleAddedNode = (node: Node): void => {
   const boot = (): boolean => {
     if (!document.querySelector("yt-live-chat-app, #chat-items")) return false;
     document.querySelectorAll<HTMLElement>(MESSAGE_SELECTOR).forEach((el) => {
+      markPending(el);
       applyBadges(el);
-      void processMessage(el);
+      processMessage(el);
       applyEmotes(el);
       applyMention(el);
     });
@@ -146,6 +150,11 @@ const handleAddedNode = (node: Node): void => {
       if (m.addedNodes.length && m.target && (m.target as HTMLElement).closest) {
         const msgEl = (m.target as HTMLElement).closest(MESSAGE_SELECTOR) as HTMLElement | null;
         if (msgEl) {
+          // Polymer can fill the author/message after the row node itself
+          // was inserted; re-run the silent decision so late-filled bot and
+          // command rows are hidden in this same microtask (still before
+          // paint). Decided rows bail out on the attribute in O(1).
+          processMessage(msgEl);
           applyEmotes(msgEl);
           applyMention(msgEl);
         }

@@ -6,7 +6,7 @@
    user interaction. */
 
 import { log } from "./logger";
-import { MESSAGE_SELECTOR } from "./commands";
+import { MESSAGE_SELECTOR } from "./dom";
 
 let ownHandle = "";
 
@@ -210,8 +210,9 @@ const wrapTargets = (node: Text): boolean => {
   const parent = node.parentElement;
   if (!parent || !parent.matches) return false;
   // Skip YouTube's own mention chips (span.mention carries no id anymore),
-  // our previous wraps and the hidden poll-text spans.
-  if (parent.closest("#mention, span.mention, [data-ytccc-poll-src], .ytccc-self-mention")) {
+  // our previous wraps, the hidden poll-text spans and link labels (the
+  // toast body reuses this walker over linkified text).
+  if (parent.closest("#mention, span.mention, [data-ytccc-poll-src], .ytccc-self-mention, a")) {
     return false;
   }
   // The ZWSP guard was dropped on purpose: YouTube renders a U+200B
@@ -223,14 +224,11 @@ const wrapTargets = (node: Text): boolean => {
   return val.toLowerCase().includes(ownHandle.toLowerCase());
 };
 
-export const applyMention = (el: HTMLElement): void => {
-  if (!ownHandle) return;
-  const message = messageOf(el);
-  if (!message) return;
+const wrapMentionsIn = (root: HTMLElement): void => {
   ensureMentionStyle();
   syncMentionStyle();
   const pattern = mentionPattern();
-  const walker = document.createTreeWalker(message, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const targets: Text[] = [];
   while (walker.nextNode()) {
     const node = walker.currentNode as Text;
@@ -263,4 +261,18 @@ export const applyMention = (el: HTMLElement): void => {
     }
     node.parentNode!.replaceChild(frag, node);
   }
+};
+
+export const applyMention = (el: HTMLElement): void => {
+  if (!ownHandle) return;
+  const message = messageOf(el);
+  if (!message) return;
+  wrapMentionsIn(message);
+};
+
+// Highlight the handle inside our own UI (bot toast bodies). Anchors are
+// excluded by wrapTargets so link labels stay intact.
+export const applyMentionToElement = (root: HTMLElement): void => {
+  if (!ownHandle) return;
+  wrapMentionsIn(root);
 };

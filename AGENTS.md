@@ -6,7 +6,7 @@ Ngôn ngữ làm việc với user: **tiếng Việt**.
 1. **KHÔNG tự ý thay đổi thiết kế hoặc logic** đã chốt trong `REQUIREMENTS.md`, `FEATURES.md`, `DESIGN_SYSTEM.md`, `UI_UX_GUIDELINES.md`. Nếu đề xuất thay đổi: hỏi user trước, chỉ làm khi được đồng ý.
 2. **Bắt buộc trước khi trả lời "xong"**:
    - `node build.mjs` sạch (tự bump version + typecheck + bundle);
-   - harness `node "C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js"` pass (24/24 hiện tại);
+   - harness `node "C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js"` pass (32/32 hiện tại);
    - ghi thay đổi vào `CHANGELOG.md`.
 3. Nhắc user **reload extension từ `dist\` và F5 trang** (SPA giữ content script cũ — gây nhiễu debug nếu không refresh).
 4. Sau mỗi bộ chỉnh sửa, cập nhật **bộ nhớ phiên làm việc** (summary) nếu được dùng môi trường có memory.

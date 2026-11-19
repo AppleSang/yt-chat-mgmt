@@ -10,7 +10,8 @@ Tiếng Việt: [README.vi.md](README.vi.md)
 - Auto-cleans messages that start with a command prefix `!`: deletes them when you're a moderator of that chat, otherwise hides them silently.
 - Auto-enables the "Live chat" mode for you.
 - Hides member / mod badges and chatter avatars.
-- Hides bots (`@nightbot`, `@streamelements`, …) — their messages show up as toasts.
+- Hides bots (`@nightbot`, `@streamelements`, …) — their messages show up as toasts (with emote images and your own handle highlighted).
+- Every incoming message stays hidden until the extension clears it as normal chat — no more flicker while messages are being filtered.
 - Keeps a log of the chat when you use commands — so you have the details whenever you need them.
 
 **7TV emotes**

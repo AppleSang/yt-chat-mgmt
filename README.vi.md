@@ -10,7 +10,8 @@ English: [README.md](README.md)
 - Tự dọn tin nhắn bắt đầu bằng dấu lệnh `!` : Xoá khi bạn là kiểm duyệt viên của kênh chat, không thì ẩn âm thầm.
 - Tự bật chế độ "Trò chuyện trực tiếp".
 - Ẩn badge hội viên / mod và avatar người chat.
-- Ẩn bot (`@nightbot`, `@streamelements`, …) — tin nhắn của bot hiện thành toast.
+- Ẩn bot (`@nightbot`, `@streamelements`, …) — tin nhắn của bot hiện thành toast (có emoji và tên bạn được highlight).
+- Mọi tin mới được giữ ẩn cho tới khi extension xác nhận không phải bot/lệnh — chat không còn giật khi dọn tin.
 - Nhật ký kênh chat khi sử dụng lệnh - trong những trường hợp cần nắm thông tin mà extension đã dọn.
 
 **Emoji 7TV**

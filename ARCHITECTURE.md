@@ -43,7 +43,7 @@ build.mjs  bump-version.ps1  dist/
 
 ## 3. Luồng dữ liệu chính
 - **Settings**: popup → `chrome.storage.sync` → content `watchConfig` (onChanged) → cập nhật `config` + quét lại (debounce 300ms).
-- **Tin nhắn chat**: MutationObserver(trên body, childList+subtree) → `handleAddedNode` (badge + command + emote cho tin nhắn) / schedulePollEmotes (poll, debounce 150ms, bỏ qua batch chứa artifact của mình) / closest(MESSAGE_SELECTOR) → applyEmotes.
+- **Tin nhắn chat**: mọi row mới được `markPending` (gắn `data-ytccc-pending` + CSS ẩn, trước paint) rồi mới xử lý: MutationObserver(trên body, childList+subtree) → `handleAddedNode` (badge + command + emote cho tin nhắn) / schedulePollEmotes (poll, debounce 150ms, bỏ qua batch chứa artifact của mình) / closest(MESSAGE_SELECTOR) → `processMessage` (quyết định ĐỒNG BỘ khi đủ author + nội dung: bot/lệnh giữ ẩn, còn lại gỡ pending để hiện; gọi lại khi author/message đến muộn; vỏ rỗng có fallback 2s) + applyEmotes.
 - **Sweep an toàn**: 3s một lần (`emoteSweep`: tin nhắn + `#content-text` + poll + catalog) và 300ms sau khi đổi settings. Sweep = lưới an toàn chống trượt node.
 - **Moderate API**: content script gọi thẳng `https://www.youtube.com/youtubei/v1/live_chat/moderate?prettyPrint=false` với SAPISIDHASH (SAPISID/1P/3P × origin `location.origin`), hoạt động cả trên studio.
 - **Create poll params**: main-world injector giải mã payload protobuf lồng trong Studio `continuation` để dựng `create_poll.params` ngay lần đầu; chỉ fallback sang params bắt từ poll thủ công/cache hoặc `ytInitialData` khi continuation không hợp lệ.
@@ -53,14 +53,15 @@ build.mjs  bump-version.ps1  dist/
 - Không bao giờ mutate DOM trong MutationObserver callback một cách vô điều kiện — từng gây vòng lặp vô hạn → treo + RAM tăng (CHANGELOG 1.0.63/64).
 - Poll xử lý theo **canonical check**: chỉ mutate khi card chưa đúng trạng thái đích (có text raw mới / chuyển ended). Batch observer chứa artifact của mình (`data-ytccc-poll`, `data-ytccc-poll-src`) bị bỏ qua.
 - Node text chứa `\u200b` bỏ qua khi quét emote (chống re-process).
+- **Mặc định ẩn tới khi quyết định xong** (1.0.126): `markPending` chỉ set `data-ytccc-pending` + inline `display:none` (idempotent, có stylesheet dự phòng) nên chạy được ngay trong observer callback mà không tạo vòng lặp; quyết định bot/lệnh chạy đồng bộ khi đủ author + nội dung, mọi await (`deletedLog`/chờ params/API) chạy nền phía sau. Dòng chưa đủ dữ liệu tiếp tục pending (fallback 2s) — không bao giờ hiện non rồi mới ẩn. Row lỡ có layout khi bị ẩn được collapse 160ms (WAAPI) để scroller clamp mượt thay vì nhảy 1 frame; `data-ytccc-decided` thay `processed` WeakSet để marker sống cùng DOM.
 
 ## 5. Kiểm thử
-- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 24 test, load `dist\content\content.js`. Phải pass 24/24 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 15, popup-update 16, popup-hider 10, command-hider 13, zip-parser 8, update-page 19...).
+- jsdom harness: `C:\Users\Dell\AppData\Local\Temp\opencode\ytccc-test\test.js` — 32 test, load `dist\content\content.js`. Phải pass 32/32 trước khi phát hành (cùng các suite đặc thù: alt-delete 37, mention 15, popup-update 16, popup-hider 10, command-hider 13, banner 12, toast-dock 18, zip-parser 8, update-page 19...).
 - Kiểm thử tay: load `dist/` vào Chrome → reload extension → **F5 trang** (SPA giữ content script cũ — nguyên nhân nhiễu khi debug).
 
 ## 6. Quy ước code
 - TS strict; module ESM; không thêm thư viện ngoài (esbuild + tsc là đủ).
 - Hàm nhỏ, có comment tiếng Anh giải thích "tại sao" (không comment vô nghĩa).
 - Key i18n mới: thêm cả `vi.ts` và `en.ts`.
-- Mọi thay đổi: build sạch (tự bump) + 24/24 + ghi CHANGELOG.md.
+- Mọi thay đổi: build sạch (tự bump) + 32/32 + ghi CHANGELOG.md.
 - **Chống vòng mutation khi thay text node**: chỉ `replaceChild` khi nội dung mới KHÁC node gốc (bài học applyMention 1.0.117 — thay fragment giống hệt → observer tự kích hoạt vô hạn).
